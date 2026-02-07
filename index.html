@@ -334,6 +334,18 @@
                                 <option value="membro">Membro</option>
                             </select>
                         </div>
+
+                        <!-- ✅✅✅ AJUSTE (Clientes): campos do RA Club (começam escondidos) -->
+                        <div id="cliValorField" class="field" style="display:none;">
+                            <label for="cliValor">Valor mensal (R$)</label>
+                            <input id="cliValor" type="number" step="0.01" placeholder="Ex: 59.90" />
+                        </div>
+
+                        <div id="cliPayDayField" class="field" style="display:none;">
+                            <label for="cliPayDay">Dia do pagamento (1-31)</label>
+                            <input id="cliPayDay" type="number" min="1" max="31" placeholder="Ex: 10" />
+                        </div>
+                        <!-- ✅✅✅ FIM AJUSTE (Clientes) -->
                     </div>
 
                     <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
