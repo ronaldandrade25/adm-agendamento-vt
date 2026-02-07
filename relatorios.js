@@ -23,7 +23,10 @@ export function initRelatoriosTab() {
     const reportsProfChartCanvas = $("#reportsProfChart");
     const reportsProfLegend = $("#reportsProfLegend");
     const reportsGrupoChartCanvas = $("#reportsGrupoChart");
-    const reportsGrupoLegend = $("#reportsGrupoChartLegend");
+
+    // ✅ AJUSTE: seu HTML usa id="reportsGrupoLegend" (antes estava buscando "reportsGrupoChartLegend")
+    const reportsGrupoLegend = $("#reportsGrupoLegend");
+
     const prodRelTbody = $("#prodRelTbody");
 
     if (!relGerarBtn || !relDetalheTbody) return;
@@ -371,6 +374,7 @@ export function initRelatoriosTab() {
                 options: { responsive: true },
             });
 
+            // ✅ AJUSTE: limpa/evita erro no legend do grupo, usando o ID correto do HTML
             if (reportsGrupoLegend) reportsGrupoLegend.innerHTML = "";
         }
     }

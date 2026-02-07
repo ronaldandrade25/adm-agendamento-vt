@@ -1,4 +1,4 @@
-// / js/firebase.js (ESM)
+// /js/firebase.js (ESM)
 // ✅ Arquivo "central" com Firebase + Auth + Helpers + Modal + Tabs + Estado compartilhado
 // ✅ Importa e inicia as abas (agenda/relatorios/clientes/pdv/config)
 
@@ -19,6 +19,8 @@ import {
     updateDoc,
     where,
     Timestamp,
+    // ✅✅✅ AJUSTE: exports que faltavam para PDV / filtros sem índice
+    limit,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
     getAuth,
@@ -254,13 +256,21 @@ export const PAYMENT_METHODS = [
 export const ONLY_PRO = { label: "Rodrigo Torre2", colecao: "reservas_rodrigotorre2" };
 
 export const state = {
-    BUSINESS_HOURS: { inicio: "09:00", fim: "19:00" },
+    // ✅✅✅ AJUSTE (CONFIG): adiciona intervalo sem quebrar o resto
+    BUSINESS_HOURS: {
+        inicio: "09:00",
+        fim: "19:00",
+        hasInterval: false,
+        intervalStart: "",
+        intervalEnd: "",
+    },
     HOURS: [],
     SERVICOS: [],
     PROFESSIONALS: [],
     CFG_WEEK: null, // { weekdays, dayStart, dayEnd }
     allClients: [],
     pdvProducts: [],
+    pdvSales: [], // ✅✅✅ AJUSTE: adiciona no state (usado pelo PDV)
     reportCache: [],
     charts: {
         reportsChartInstance: null,
@@ -282,13 +292,34 @@ export function generateHours(
     let current = new Date(2000, 0, 1, sh, sm, 0);
     const endDate = new Date(2000, 0, 1, eh, em, 0);
 
+    // ✅✅✅ AJUSTE (CONFIG): pular horários dentro do intervalo (almoço/pausa) se estiver ativo
+    const hasInterval = !!state?.BUSINESS_HOURS?.hasInterval;
+    const iStart = String(state?.BUSINESS_HOURS?.intervalStart || "").trim();
+    const iEnd = String(state?.BUSINESS_HOURS?.intervalEnd || "").trim();
+    const iStartMin = hasInterval && iStart ? toMinutes(iStart) : null;
+    const iEndMin = hasInterval && iEnd ? toMinutes(iEnd) : null;
+
+    function isInInterval(hhmm) {
+        if (!hasInterval || iStartMin == null || iEndMin == null) return false;
+        const m = toMinutes(hhmm);
+        // intervalo válido somente se end > start
+        if (iEndMin <= iStartMin) return false;
+        return m >= iStartMin && m < iEndMin;
+    }
+
     while (current <= endDate) {
         const h = pad2(current.getHours());
         const m = pad2(current.getMinutes());
-        hours.push(`${h}:${m}`);
+        const hhmm = `${h}:${m}`;
+
+        if (!isInInterval(hhmm)) hours.push(hhmm);
+
         current.setMinutes(current.getMinutes() + stepMinutes);
     }
-    if (!hours.includes("18:30")) hours.push("18:30");
+
+    // mantém fallback antigo (sem afetar mobile/desktop)
+    if (!hours.includes("18:30") && !isInInterval("18:30")) hours.push("18:30");
+
     return hours;
 }
 state.HOURS = generateHours();
@@ -374,7 +405,6 @@ export function populateProfessionalSelects() {
             ];
             profissionalSelect.innerHTML = opts.join("");
 
-            // mantém seleção atual se ainda existir, senão "todos"
             const exists = [...profissionalSelect.options].some((o) => o.value === current);
             profissionalSelect.value = exists ? current : "todos";
         }
@@ -573,6 +603,8 @@ export {
     updateDoc,
     where,
     Timestamp,
+    // ✅✅✅ AJUSTE: exporta limit também (se você usar depois)
+    limit,
 };
 
 /* ========= INIT ========= */

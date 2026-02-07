@@ -184,7 +184,7 @@
                         </button>
 
                         <!-- ✅ NOVO: botão opcional para abrir o modal Resumo Geral (seu JS pode usar depois) -->
-                        <button id="openResumoGeralModal" class="btn btn-light">
+                        <button id="openResumoGeralModal" class="btn btn-light" type="button">
                             <i class="bx bx-receipt"></i> Resumo geral / Despesas
                         </button>
                     </div>
@@ -283,7 +283,159 @@
                 </div>
             </div>
 
-            <!-- campos invisíveis usados por alguns scripts -->
+            <!-- ✅✅✅ AJUSTE NO HTML (SEM MEXER NAS OUTRAS ABAS):
+                 - seu JS novo usa #expenseForm e #expenseTableBody e #expenseMethod/#expenseDate/#expenseDesc/#expenseCategory/#expenseValue
+                 - você tinha spans escondidos (ok), mas não tinha o form/tabela com esses IDs.
+                 - então eu adicionei os blocos DE GESTÃO + SAÍDAS aqui, mantendo tudo que você já tinha. -->
+
+            <!-- NOVO: Resumo geral de gestão (entradas x saídas) -->
+            <div class="card card-management" style="margin-top:14px;">
+                <div class="card-header">
+                    <h2>Resumo geral de gestão</h2>
+                    <p class="muted" style="margin:6px 0 0;">Entradas de serviços + produtos e saídas no período
+                        selecionado.</p>
+                </div>
+
+                <div class="card-body">
+                    <div class="kpis kpis-gestao">
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Total de agendamentos (serviços)</span>
+                            <span id="mgTotalAppointments" class="kpi-value">0</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Faturamento em serviços</span>
+                            <span id="mgServicesRevenue" class="kpi-value">R$ 0,00</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Faturamento em produtos</span>
+                            <span id="mgProductsRevenue" class="kpi-value">R$ 0,00</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Qtd. total de produtos vendidos</span>
+                            <span id="mgProductsQty" class="kpi-value">0</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Faturamento total (serviços + produtos)</span>
+                            <span id="mgOverallRevenue" class="kpi-value">R$ 0,00</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Total de saídas (despesas)</span>
+                            <span id="mgExpensesTotal" class="kpi-value">R$ 0,00</span>
+                        </div>
+
+                        <div class="kpi kpi-gestao">
+                            <span class="kpi-label">Resultado líquido (entradas - saídas)</span>
+                            <span id="mgNetResult" class="kpi-value">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:14px;">
+                        <h3 class="chart-title-sm">Totais por forma de pagamento</h3>
+                        <div class="table-wrapper">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Forma de pagamento</th>
+                                        <th>Serviços</th>
+                                        <th>Produtos</th>
+                                        <th>Total geral</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mgPaySummaryTbody">
+                                    <tr>
+                                        <td colspan="4" class="loading-row">Gere um relatório para ver o resumo.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOVO: Controle de saídas / despesas -->
+            <div class="card card-expenses" style="margin-top:14px;">
+                <div class="card-header">
+                    <h2>Saídas / Despesas da barbearia</h2>
+                </div>
+
+                <div class="card-body">
+                    <form id="expenseForm" class="form-grid expense-form">
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="expenseDate">Data</label>
+                                <input type="date" id="expenseDate" />
+                            </div>
+
+                            <div class="field">
+                                <label for="expenseDesc">Descrição</label>
+                                <input type="text" id="expenseDesc" placeholder="Ex.: Aluguel, Luz, Produtos..." />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="expenseCategory">Categoria</label>
+                                <select id="expenseCategory">
+                                    <option value="">Selecione</option>
+                                    <option value="Aluguel">Aluguel</option>
+                                    <option value="Contas fixas">Contas fixas</option>
+                                    <option value="Produtos / insumos">Produtos / insumos</option>
+                                    <option value="Folha / comissões">Folha / comissões</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="expenseMethod">Forma de pagamento</label>
+                                <select id="expenseMethod"></select>
+                            </div>
+
+                            <div class="field">
+                                <label for="expenseValue">Valor (R$)</label>
+                                <input type="number" step="0.01" id="expenseValue" />
+                            </div>
+
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-edit btn-expense-save">
+                                    Registrar saída
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="table-wrapper" style="margin-top:12px;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th>Forma</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="expenseTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading-row">
+                                        Nenhuma saída carregada. Gere um relatório para ver o período.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ mantém os campos invisíveis que você já tinha (não removi nada) -->
             <div class="hidden-block">
                 <span id="mgTotalAppointments"></span>
                 <span id="mgServicesRevenue"></span>
@@ -296,6 +448,7 @@
                     <tbody id="mgPaySummaryTbody"></tbody>
                 </table>
             </div>
+
         </section>
     </main>
 
@@ -425,7 +578,15 @@
                             <label for="pdvProdValor">Valor (R$)</label>
                             <input id="pdvProdValor" type="number" step="0.01" />
                         </div>
+
+                        <!-- ✅✅✅ AJUSTE (PDV): campo de estoque -->
+                        <div class="field">
+                            <label for="pdvProdEstoque">Estoque (qtd)</label>
+                            <input id="pdvProdEstoque" type="number" min="0" step="1" value="0" />
+                        </div>
+                        <!-- ✅✅✅ FIM AJUSTE (PDV) -->
                     </div>
+
                     <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
                         <button id="pdvProdSalvarBtn" class="btn btn-edit"><i class="bx bx-save"></i> Salvar
                             produto</button>
@@ -443,12 +604,13 @@
                             <tr>
                                 <th>Produto</th>
                                 <th>Valor</th>
+                                <th>Estoque</th>
                                 <th style="width:120px;text-align:right;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="pdvProductsTbody">
                             <tr>
-                                <td colspan="3" class="loading-row">Carregando produtos...</td>
+                                <td colspan="4" class="loading-row">Carregando produtos...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -477,6 +639,13 @@
                             <label for="pdvSaleQtd">Qtd</label>
                             <input id="pdvSaleQtd" type="number" min="1" value="1" />
                         </div>
+
+                        <div class="field">
+                            <label for="pdvSaleMetodo">Forma de pagamento</label>
+                            <select id="pdvSaleMetodo">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -486,10 +655,32 @@
                 </div>
             </div>
 
+            <!-- ✅✅✅ AJUSTE (PDV): FILTRO POR PERÍODO (DE/ATÉ) + botão -->
             <div class="card" style="margin-top:14px;">
-                <div class="card-header">
-                    <h2>Últimas vendas</h2>
+                <div class="card-header"
+                    style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <h2 style="margin:0;">Últimas vendas</h2>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                        <div class="field" style="min-width:180px; margin:0;">
+                            <label for="pdvSalesDe">De</label>
+                            <input id="pdvSalesDe" type="date" />
+                        </div>
+
+                        <div class="field" style="min-width:180px; margin:0;">
+                            <label for="pdvSalesAte">Até</label>
+                            <input id="pdvSalesAte" type="date" />
+                        </div>
+
+                        <div class="field" style="margin:0;">
+                            <label>&nbsp;</label>
+                            <button id="pdvSalesFiltrarBtn" class="btn btn-light" type="button">
+                                <i class="bx bx-filter-alt"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="card-body table-wrapper">
                     <table class="table">
                         <thead>
@@ -499,16 +690,20 @@
                                 <th>Produto</th>
                                 <th>Qtd</th>
                                 <th>Total</th>
+                                <!-- ✅ NOVO: coluna ações (cancelar venda) -->
+                                <th style="width:120px;text-align:right;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="pdvSalesTbody">
                             <tr>
-                                <td colspan="5" class="loading-row">Sem vendas para exibir.</td>
+                                <td colspan="6" class="loading-row">Sem vendas para exibir.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+            <!-- ✅✅✅ FIM AJUSTE (PDV) -->
+
         </section>
     </main>
 
@@ -634,6 +829,28 @@
                             <label for="cfgFim">Fim</label>
                             <input id="cfgFim" type="time" value="19:00" />
                         </div>
+
+                        <!-- ✅✅✅ NOVO: Intervalo (almoço/pausa) -->
+                        <hr style="border:0;border-top:1px solid rgba(148,163,184,0.12);margin:14px 0;">
+
+                        <div class="field" style="display:flex;align-items:center;gap:10px;">
+                            <label style="display:flex;align-items:center;gap:10px;">
+                                <input id="cfgHasInterval" type="checkbox" />
+                                Possui intervalo (almoço/pausa)
+                            </label>
+                        </div>
+
+                        <div id="cfgIntervalRow" class="form-row" style="display:none;">
+                            <div class="field">
+                                <label for="cfgIntervalStart">Início do intervalo</label>
+                                <input id="cfgIntervalStart" type="time" value="12:00" />
+                            </div>
+                            <div class="field">
+                                <label for="cfgIntervalEnd">Fim do intervalo</label>
+                                <input id="cfgIntervalEnd" type="time" value="13:00" />
+                            </div>
+                        </div>
+                        <!-- ✅✅✅ FIM: Intervalo -->
 
                         <button id="cfgSalvarHorario" class="btn btn-edit" style="width:100%;margin-top:10px;">
                             <i class="bx bx-save"></i> Salvar
@@ -839,10 +1056,10 @@
                         </div>
 
                         <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-                            <button id="expSalvarBtn" class="btn btn-edit">
+                            <button id="expSalvarBtn" class="btn btn-edit" type="button">
                                 <i class="bx bx-save"></i> Salvar despesa
                             </button>
-                            <button id="expLimparBtn" class="btn btn-light">
+                            <button id="expLimparBtn" class="btn btn-light" type="button">
                                 <i class="bx bx-eraser"></i> Limpar
                             </button>
                         </div>
