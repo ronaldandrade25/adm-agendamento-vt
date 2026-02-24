@@ -1,0 +1,1164 @@
+:root {
+  --primary-color: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary-color: #0f172a;
+  --bg-color: #020617;
+  --card-bg: #0b1120;
+  --border-color: #1e293b;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --warning: #f97316;
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --white: #ffffff;
+  --radius-xl: 18px;
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.7);
+}
+
+/* ===== Reset básico ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1d2340 0, #020617 55%);
+  color: var(--text);
+}
+
+/* ===== Header / Nav ===== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.7));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.app-nav {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.logo-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid rgba(248, 250, 252, 0.8);
+  box-shadow: 0 0 25px rgba(129, 140, 248, 0.7);
+}
+
+.logo-text span {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.logo-text small {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(209, 213, 219, 0.9);
+}
+
+.tabs-in-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+}
+
+/* ===== Botões ===== */
+.btn {
+  border-radius: 999px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  background: var(--primary-color);
+  color: var(--white);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.15s ease-in-out;
+}
+
+.btn i {
+  font-size: 1rem;
+}
+
+.btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 25px rgba(129, 140, 248, 0.55);
+}
+
+.btn-light {
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.8);
+  color: var(--text);
+}
+
+.btn-light:hover {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #111827;
+}
+
+.btn-warning:hover {
+  background: #ea580c;
+}
+
+.btn-del {
+  background: var(--danger);
+}
+
+.btn-del:hover {
+  background: #b91c1c;
+}
+
+.btn-edit {
+  background: #22c55e;
+}
+
+.btn-edit:hover {
+  background: #16a34a;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+}
+
+/* NOVO: botão ícone (editar / excluir) mais alinhado */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-icon i {
+  font-size: 1.05rem;
+}
+
+/* ===== Tabs ===== */
+.tab-btn {
+  border-radius: 999px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.15s;
+}
+
+.tab-btn i {
+  font-size: 1.1rem;
+}
+
+.tab-btn:hover {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.tab-btn.active {
+  background: var(--white);
+  color: #0f172a;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.55);
+}
+
+/* ===== Layout principal ===== */
+.page-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--white);
+}
+
+.section-header p {
+  margin: 4px 0 16px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: radial-gradient(circle at top left, rgba(79, 70, 229, 0.38) 0, rgba(15, 23, 42, 0.98) 40%);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 16px;
+}
+
+.card-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-header h2,
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--white);
+}
+
+.card-body {
+  padding: 16px;
+}
+
+/* ===== Formulários ===== */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--white);
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.7);
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.form-row:nth-child(1) {
+  grid-template-columns: 2fr 1fr;
+}
+
+.form-row:last-child {
+  grid-template-columns: 1fr;
+}
+
+/* NOVO: alinhamento de linha com 4 campos (quando for horário de trabalho) */
+.form-row.row-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* NOVO: input type file (foto do profissional / png, jpeg) */
+.field input[type="file"] {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px dashed rgba(148, 163, 184, 0.7);
+  background: rgba(2, 6, 23, 0.6);
+  cursor: pointer;
+}
+
+.field input[type="file"]::file-selector-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  margin-right: 10px;
+  background: rgba(99, 102, 241, 0.9);
+  color: var(--white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.field input[type="file"]::file-selector-button:hover {
+  background: rgba(79, 70, 229, 0.95);
+}
+
+/* NOVO: mini preview de imagem */
+.img-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.img-preview .thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.img-preview .img-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ===== Grid Clientes ===== */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+  gap: 16px;
+}
+
+.left-column,
+.right-column {
+  min-width: 0;
+}
+
+/* KPIs */
+.kpis,
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.kpi-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kpi {
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.96));
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.kpi-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+/* ===== Toolbar Agenda / Relatórios ===== */
+.toolbar,
+.reports-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.actions-field .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ===== Tabelas ===== */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(30, 64, 175, 0.55);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table thead th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.table tbody tr:hover {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.loading-row {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* NOVO: células com ações alinhadas */
+.table-actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.table-actions .btn {
+  box-shadow: none;
+}
+
+.table-actions .btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Pagamentos resumo */
+.payments-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+/* ===== Filtros de clientes ===== */
+.client-list-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-tabs {
+  display: inline-flex;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.filter-tab-btn {
+  border-radius: 999px;
+  border: 0;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filter-tab-btn.active {
+  background: var(--primary-color);
+  color: #f9fafb;
+}
+
+.search-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.search-box input {
+  border: 0;
+  background: transparent;
+  color: var(--white);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-box i {
+  color: var(--text-muted);
+}
+
+/* ===== Agenda ===== */
+.agenda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.timeslot {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 10px 12px;
+  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.2), rgba(15, 23, 42, 0.98));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeslot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeslot-hour {
+  font-weight: 600;
+  color: var(--white);
+}
+
+.timeslot-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: var(--text-muted);
+}
+
+.timeslot-body {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.timeslot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* NOVO: bloco “horário bloqueado” (fica bonito dentro do slot) */
+.timeslot-blocked {
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.timeslot-prof {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+/* ===== Chart legend ===== */
+.chart-legend {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.chart-legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+/* ===== Modal ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-dialog {
+  width: 100%;
+  max-width: 480px; /* ajustei um pouco pra caber forms de edição */
+  background: #0b1120;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header,
+.modal-footer {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 0;
+}
+
+.modal-body {
+  padding: 14px 16px;
+}
+
+.modal-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* NOVO: modal com conteúdo maior (se você quiser usar no JS) */
+.modal-dialog.modal-lg {
+  max-width: 720px;
+}
+
+/* ===== Notificações ===== */
+#notification-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notification {
+  min-width: 240px;
+  background: #0b1120;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.notification.success {
+  border-color: rgba(34, 197, 94, 0.7);
+}
+
+.notification.error {
+  border-color: rgba(239, 68, 68, 0.8);
+}
+
+/* ===== Gate de Login ===== */
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  padding: 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: #0b1120;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+  padding: 22px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+.auth-card h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.3rem;
+}
+
+.auth-sub {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 6px;
+}
+
+.auth-card label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.auth-card input {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: #020617;
+  color: var(--white);
+  padding: 9px 11px;
+}
+
+.btn-auth {
+  margin-top: 6px;
+  background: var(--primary-color);
+  color: #f9fafb;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-auth:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  min-height: 1.1em;
+  font-size: 0.86rem;
+  color: #f87171;
+}
+
+/* ===== Util ===== */
+.hidden {
+  display: none !important;
+}
+
+.hidden-block {
+  display: none;
+}
+
+/* ===== Responsivo ===== */
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .kpis,
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+  .toolbar,
+  .reports-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .app-nav {
+    flex-wrap: wrap;
+  }
+  .tabs-in-header {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  .header-right {
+    order: 3;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .toolbar,
+  .reports-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Modal de seleção de serviços ===== */
+.servicos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* acima do #mainModal */
+}
+
+.servicos-modal-box {
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  background: #020617;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.servicos-modal-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(30, 64, 175, 0.5);
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.servicos-modal-body {
+  padding: 12px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.servicos-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.servicos-search input::placeholder {
+  color: #64748b;
+}
+
+.servicos-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.servico-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px;
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.servico-item + .servico-item {
+  margin-top: 4px;
+}
+
+.servico-item:hover {
+  background: radial-gradient(circle at top left, #1d4ed8, #020617);
+  transform: translateY(-1px);
+}
+
+.servico-nome {
+  flex: 1;
+  text-align: left;
+}
+
+.servico-valor {
+  font-weight: 600;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Deixa claro que o campo de serviço é clicável */
+#newServico,
+#editServico {
+  cursor: pointer;
+}
+
+/* ===== Relatórios: gráficos lado a lado ===== */
+.reports-charts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.report-chart-block {
+  flex: 1 1 320px;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-chart-block canvas {
+  max-height: 260px;
+}
+
+.report-chart-block.report-chart-block-full {
+  flex-basis: 100%;
+  max-width: 100%;
+}
+
+.chart-title-sm {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 900px) {
+  .report-chart-block {
+    max-width: 100%;
+  }
+}
+
+/* === PDV / Produtos === */
+.grid-pdv {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .grid-pdv {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card-product-report {
+  margin-top: 1.5rem;
+}
+
+.small-muted {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Garantir espaçamento entre cards da área de relatórios */
+#reportsMain .card + .card {
+  margin-top: 1rem;
+}
+
+/* Ajuste leve na tabela do PDV */
+#pdvProductsTbody .btn.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+/* ====== Gestão / Resumo geral ====== */
+.card-management {
+  margin-top: 24px;
+}
+
+.card-management .card-subtitle {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.kpis-gestao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.kpi-gestao .kpi-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.kpi-gestao .kpi-value {
+  font-size: 1.1rem;
+}
+
+.management-subsection {
+  margin-top: 0.5rem;
+}
+
+.table.table-sm th,
+.table.table-sm td {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* ====== Saídas / Despesas ====== */
+.card-expenses {
+  margin-top: 20px;
+}
+
+.expense-form .form-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.expense-form .field {
+  flex: 1;
+  min-width: 150px;
+}
+
+.btn-expense-save {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .expense-form .form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-expense-save {
+    width: 100%;
+  }
+}
+
+/* ===== Configurações (novo) ===== */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 980px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.muted {
+  opacity: 0.78;
+}
+
+/* ===========================
+   NOVO: Calendário semanal / Dias de trabalho
+   (vai servir pra quando você adicionar no HTML/JS)
+   =========================== */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.weekday-chip {
+  border-radius: 999px;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(2, 6, 23, 0.55);
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.15s ease-in-out;
+  user-select: none;
+}
+
+.weekday-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(99, 102, 241, 0.7);
+  box-shadow: 0 12px 26px rgba(129, 140, 248, 0.22);
+}
+
+.weekday-chip.active {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.65);
+  color: rgba(240, 253, 244, 0.95);
+}
+
+@media (max-width: 720px) {
+  .weekdays {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* NOVO: bloco de “intervalos” (ex.: manhã/tarde ou múltiplos turnos) */
+.shift-block {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.35);
+}
+
+.shift-block .shift-title {
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.92);
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.shift-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .shift-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
