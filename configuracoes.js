@@ -37,15 +37,6 @@ export function initConfiguracoesTab() {
         const cfgFim = await waitEl("#cfgFim");
         const cfgSalvarHorario = await waitEl("#cfgSalvarHorario");
 
-<<<<<<< HEAD
-=======
-        // ✅✅✅ NOVO: Intervalo (almoço/pausa)
-        const cfgHasInterval = await waitEl("#cfgHasInterval");
-        const cfgIntervalRow = await waitEl("#cfgIntervalRow");
-        const cfgIntervalStart = await waitEl("#cfgIntervalStart");
-        const cfgIntervalEnd = await waitEl("#cfgIntervalEnd");
-
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         // ===== Semana =====
         const cfgWeekdays = await waitEl("#cfgWeekdays");
         const cfgDayStart = await waitEl("#cfgDayStart");
@@ -178,50 +169,6 @@ export function initConfiguracoesTab() {
             }
         }
 
-<<<<<<< HEAD
-=======
-        // ✅✅✅ NOVO: UI Intervalo
-        function applyIntervalUiFromState() {
-            const has = !!state?.BUSINESS_HOURS?.hasInterval;
-            const ini = state?.BUSINESS_HOURS?.intervalStart || "12:00";
-            const fim = state?.BUSINESS_HOURS?.intervalEnd || "13:00";
-
-            if (cfgHasInterval) cfgHasInterval.checked = has;
-            if (cfgIntervalStart) cfgIntervalStart.value = ini;
-            if (cfgIntervalEnd) cfgIntervalEnd.value = fim;
-
-            if (cfgIntervalRow) cfgIntervalRow.style.display = has ? "" : "none";
-            if (cfgIntervalStart) cfgIntervalStart.disabled = !has;
-            if (cfgIntervalEnd) cfgIntervalEnd.disabled = !has;
-        }
-
-        function getIntervalFromForm() {
-            const has = !!cfgHasInterval?.checked;
-            const ini = (cfgIntervalStart?.value || "").trim();
-            const fim = (cfgIntervalEnd?.value || "").trim();
-
-            if (!has) {
-                return { hasInterval: false, intervalStart: "", intervalEnd: "" };
-            }
-
-            // se marcou intervalo, exige horários
-            if (!ini || !fim) {
-                return { error: "Informe início e fim do intervalo (ou desmarque a opção)." };
-            }
-
-            return { hasInterval: true, intervalStart: ini, intervalEnd: fim };
-        }
-
-        // (opcional) Melhor UX nas exceções: se marcar "Dia fechado", desabilita horários
-        function applyExClosedUi() {
-            const fechado = !!cfgExClosed?.checked;
-            if (cfgExStart) cfgExStart.disabled = fechado;
-            if (cfgExEnd) cfgExEnd.disabled = fechado;
-        }
-        cfgExClosed?.addEventListener("change", applyExClosedUi);
-        applyExClosedUi();
-
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         // =========================
         // Exceções por escopo
         // =========================
@@ -649,35 +596,10 @@ export function initConfiguracoesTab() {
                     state.BUSINESS_HOURS = {
                         inicio: v.inicio || state.BUSINESS_HOURS.inicio,
                         fim: v.fim || state.BUSINESS_HOURS.fim,
-<<<<<<< HEAD
                     };
                 }
                 if (cfgInicio) cfgInicio.value = state.BUSINESS_HOURS.inicio || "09:00";
                 if (cfgFim) cfgFim.value = state.BUSINESS_HOURS.fim || "19:00";
-=======
-
-                        // ✅✅✅ NOVO: intervalo
-                        hasInterval: !!v.hasInterval,
-                        intervalStart: v.intervalStart || "",
-                        intervalEnd: v.intervalEnd || "",
-                    };
-                } else {
-                    // garante chaves (sem quebrar)
-                    state.BUSINESS_HOURS = {
-                        ...(state.BUSINESS_HOURS || {}),
-                        hasInterval: !!state?.BUSINESS_HOURS?.hasInterval,
-                        intervalStart: state?.BUSINESS_HOURS?.intervalStart || "",
-                        intervalEnd: state?.BUSINESS_HOURS?.intervalEnd || "",
-                    };
-                }
-
-                if (cfgInicio) cfgInicio.value = state.BUSINESS_HOURS.inicio || "09:00";
-                if (cfgFim) cfgFim.value = state.BUSINESS_HOURS.fim || "19:00";
-
-                // ✅ aplica UI do intervalo
-                applyIntervalUiFromState();
-
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                 state.HOURS = generateHours(state.BUSINESS_HOURS.inicio, state.BUSINESS_HOURS.fim, 25);
             } catch (e) {
                 console.error("Erro ao carregar horários do painel:", e);
@@ -764,27 +686,6 @@ export function initConfiguracoesTab() {
             );
         }
 
-<<<<<<< HEAD
-=======
-        // ✅✅✅ NOVO: toggle intervalo (UI)
-        cfgHasInterval?.addEventListener("change", () => {
-            // reflete no state (apenas UI) e ajusta exibição
-            const has = !!cfgHasInterval.checked;
-            if (!state.BUSINESS_HOURS) state.BUSINESS_HOURS = {};
-            state.BUSINESS_HOURS.hasInterval = has;
-
-            if (cfgIntervalRow) cfgIntervalRow.style.display = has ? "" : "none";
-            if (cfgIntervalStart) cfgIntervalStart.disabled = !has;
-            if (cfgIntervalEnd) cfgIntervalEnd.disabled = !has;
-
-            // defaults se usuário marcar agora
-            if (has) {
-                if (cfgIntervalStart && !cfgIntervalStart.value) cfgIntervalStart.value = "12:00";
-                if (cfgIntervalEnd && !cfgIntervalEnd.value) cfgIntervalEnd.value = "13:00";
-            }
-        });
-
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         // ✅ Salvar horário painel
         cfgSalvarHorario?.addEventListener("click", async (e) => {
             e.preventDefault?.();
@@ -794,7 +695,6 @@ export function initConfiguracoesTab() {
                 const fim = (cfgFim?.value || "").trim();
                 if (!inicio || !fim) return showNotification("Informe início e fim do expediente.", "error");
 
-<<<<<<< HEAD
                 await runWithQuickRetry(() =>
                     setDoc(CFG_DOC_HORARIOS, { inicio, fim, updatedAt: serverTimestamp() }, { merge: true })
                 );
@@ -802,44 +702,6 @@ export function initConfiguracoesTab() {
                 state.BUSINESS_HOURS = { inicio, fim };
                 state.HOURS = generateHours(inicio, fim, 25);
 
-=======
-                // ✅✅✅ NOVO: intervalo
-                const interval = getIntervalFromForm();
-                if (interval?.error) return showNotification(interval.error, "error");
-
-                await runWithQuickRetry(() =>
-                    setDoc(
-                        CFG_DOC_HORARIOS,
-                        {
-                            inicio,
-                            fim,
-
-                            // intervalo
-                            hasInterval: !!interval.hasInterval,
-                            intervalStart: interval.intervalStart || "",
-                            intervalEnd: interval.intervalEnd || "",
-
-                            updatedAt: serverTimestamp(),
-                        },
-                        { merge: true }
-                    )
-                );
-
-                state.BUSINESS_HOURS = {
-                    ...(state.BUSINESS_HOURS || {}),
-                    inicio,
-                    fim,
-                    hasInterval: !!interval.hasInterval,
-                    intervalStart: interval.intervalStart || "",
-                    intervalEnd: interval.intervalEnd || "",
-                };
-
-                state.HOURS = generateHours(inicio, fim, 25);
-
-                // mantém UI consistente
-                applyIntervalUiFromState();
-
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                 showNotification("Horário de funcionamento salvo!", "success");
             } catch (err) {
                 console.error(err);
@@ -1005,50 +867,9 @@ export function initConfiguracoesTab() {
             }
         });
 
-<<<<<<< HEAD
         // ✅ start
         resetProfForm();
         hideFileInputsEverywhere();
-=======
-        // ✅ Remover serviço
-        svcTbody?.addEventListener("click", (e) => {
-            const btn = e.target.closest("[data-svc-del]");
-            if (!btn) return;
-
-            const id = btn.dataset.svcDel;
-            if (!id) return;
-
-            mainModal.show({
-                title: "Excluir serviço",
-                body: "<p>Deseja excluir este serviço?</p>",
-                buttons: [
-                    { text: "Cancelar", class: "btn-light" },
-                    {
-                        text: "Excluir",
-                        class: "btn-del",
-                        onClick: async () => {
-                            try {
-                                await waitForAuth();
-                                await runWithQuickRetry(() => deleteDoc(doc(db, "servicos", id)));
-                                showNotification("Serviço excluído!", "success");
-                                return true;
-                            } catch (err) {
-                                console.error(err);
-                                if (isPermissionError(err)) showPermissionHint("excluir serviço");
-                                else showNotification("Erro ao excluir serviço.", "error");
-                                return false;
-                            }
-                        },
-                    },
-                ],
-            });
-        });
-
-        // ✅ start
-        resetProfForm();
-        hideFileInputsEverywhere();
-        applyIntervalUiFromState();
->>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         loadConfigData();
     })();
 }
