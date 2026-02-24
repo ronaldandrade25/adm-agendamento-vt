@@ -72,10 +72,86 @@ export function initAgendaTab() {
         return normalizeTime(prof) || normalizeTime(geral) || normalizeTime(semana) || fallback;
     }
 
+<<<<<<< HEAD
+=======
+    // ============================
+    // ✅✅✅ AJUSTE (INTERVALO): carregar do Firestore e aplicar na agenda
+    // ============================
+    let __bhLoadedOnce = false;
+
+    async function loadBusinessHoursFromFirestore() {
+        // evita bater no Firestore toda hora
+        if (__bhLoadedOnce) return;
+
+        try {
+            await waitForAuth();
+            const snap = await getDoc(doc(db, "config", "horarios"));
+            if (snap.exists()) {
+                const v = snap.data() || {};
+
+                // mantém compatibilidade com o que já existe
+                const inicio = normalizeTime(v.inicio) || state.BUSINESS_HOURS?.inicio || "09:00";
+                const fim = normalizeTime(v.fim) || state.BUSINESS_HOURS?.fim || "19:00";
+
+                // ✅ intervalo (novos campos)
+                const hasInterval = !!v.hasInterval;
+                const intervalStart = normalizeTime(v.intervalStart);
+                const intervalEnd = normalizeTime(v.intervalEnd);
+
+                state.BUSINESS_HOURS = {
+                    ...(state.BUSINESS_HOURS || {}),
+                    inicio,
+                    fim,
+                    hasInterval,
+                    intervalStart,
+                    intervalEnd,
+                };
+
+                // se a agenda/relatórios dependem de HOURS, recalcula
+                state.HOURS = generateHours(inicio, fim, 25);
+            }
+        } catch (e) {
+            console.error("Erro ao carregar config/horarios (intervalo):", e);
+        } finally {
+            __bhLoadedOnce = true;
+        }
+    }
+
+    function getIntervalRangeMin() {
+        const bh = state?.BUSINESS_HOURS || {};
+        const hasInterval = !!bh.hasInterval;
+
+        const s = normalizeTime(bh.intervalStart);
+        const e = normalizeTime(bh.intervalEnd);
+
+        if (!hasInterval || !s || !e) return null;
+
+        const sm = hhmmToMin(s);
+        const em = hhmmToMin(e);
+
+        if (sm == null || em == null) return null;
+        if (em <= sm) return null; // intervalo inválido
+
+        return { startMin: sm, endMin: em, startHH: s, endHH: e };
+    }
+
+    function isTimeInsideInterval(hhmm) {
+        const r = getIntervalRangeMin();
+        if (!r) return false;
+        const m = hhmmToMin(hhmm);
+        if (m == null) return false;
+        return m >= r.startMin && m < r.endMin;
+    }
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
     /**
      * ✅ Geração de horários "certinha" (fim EXCLUSIVO)
      * - Evita aparecer horário "sobrando"
      * - Só gera horários onde o início do slot é < fim
+<<<<<<< HEAD
+=======
+     * - ✅✅✅ AJUSTE: remove horários dentro do intervalo (se existir)
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
      */
     function safeGenerateHours(startHH, endHH, stepMin) {
         const start = hhmmToMin(startHH);
@@ -92,13 +168,25 @@ export function initAgendaTab() {
         if (mod !== 0) cur += (step - mod);
 
         while (cur < end) {
+<<<<<<< HEAD
             out.push(minToHHmm(cur));
+=======
+            const hh = minToHHmm(cur);
+
+            // ✅✅✅ remove horários que caem dentro do intervalo
+            if (!isTimeInsideInterval(hh)) out.push(hh);
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
             cur += step;
         }
 
         return out.filter((h) => {
             const m = hhmmToMin(h);
+<<<<<<< HEAD
             return m != null && m >= start && m < end;
+=======
+            return m != null && m >= start && m < end && !isTimeInsideInterval(h);
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         });
     }
 
@@ -145,6 +233,12 @@ export function initAgendaTab() {
     async function getDayAvailabilityForColecao(ymd, colecao) {
         await waitForAuth();
 
+<<<<<<< HEAD
+=======
+        // ✅ garante que intervalo esteja carregado antes de gerar horários
+        await loadBusinessHoursFromFirestore();
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         const cfgWeekdays = Array.isArray(state?.CFG_WEEK?.weekdays) ? state.CFG_WEEK.weekdays : [1, 2, 3, 4, 5];
         const weekStart =
             normalizeTime(state?.CFG_WEEK?.dayStart) ||
@@ -210,6 +304,12 @@ export function initAgendaTab() {
     async function getAvailableHoursForSelection(ymd, colecaoSel) {
         if (!ymd) return [];
 
+<<<<<<< HEAD
+=======
+        // ✅ garante intervalo carregado (se vier de config/horarios)
+        await loadBusinessHoursFromFirestore();
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         const profs = (state.PROFESSIONALS || []).filter((p) => p && p.ativo !== false);
         if (!profs.length) return [];
 
@@ -349,6 +449,15 @@ export function initAgendaTab() {
         if (start < dayStart) return false;
         if (end > dayEnd) return false;
 
+<<<<<<< HEAD
+=======
+        // ✅✅✅ AJUSTE (INTERVALO): serviço não pode atravessar o intervalo
+        const r = getIntervalRangeMin();
+        if (r) {
+            if (overlaps(start, end, r.startMin, r.endMin)) return false;
+        }
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         const apps = Array.isArray(appointments) ? appointments : [];
         for (const a of apps) {
             const aStart = hhmmToMin(a.hora);
@@ -423,7 +532,10 @@ export function initAgendaTab() {
             return;
         }
 
+<<<<<<< HEAD
         // 🔥 aqui é o segredo: a grade olha "sobreposição" por duração
+=======
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         agendaGrid.innerHTML = hoursToRender.map((h) => {
             const occ = findOccupancyForSlot(h, appointments);
 
@@ -455,7 +567,10 @@ export function initAgendaTab() {
             // Slot OCUPADO - BLOQUEIO
             // ============================
             if (a.bloqueado && (!a.clienteNome || a.clienteNome === "—")) {
+<<<<<<< HEAD
                 // se for continuação de um bloqueio (quase nunca, mas previne), só mostra ocupado
+=======
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                 if (!occ.isStart) {
                     return `
             <div class="timeslot">
@@ -504,7 +619,10 @@ export function initAgendaTab() {
 
             const durLabel = a.tempoMin ? ` • ${Number(a.tempoMin)} min` : "";
 
+<<<<<<< HEAD
             // Slot de continuação: mostra ocupação e remove ações de editar/excluir (pra não confundir)
+=======
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
             if (!occ.isStart) {
                 return `
           <div class="timeslot">
@@ -529,7 +647,10 @@ export function initAgendaTab() {
         `;
             }
 
+<<<<<<< HEAD
             // Slot inicial: mostra completo com ações
+=======
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
             return `
         <div class="timeslot">
           <div class="timeslot-header">
@@ -574,6 +695,12 @@ export function initAgendaTab() {
         try {
             agendaGrid.innerHTML = `<div class="loading-row">Carregando...</div>`;
 
+<<<<<<< HEAD
+=======
+            // ✅ garante que intervalo/hours estejam atualizados antes de montar filtro e grid
+            await loadBusinessHoursFromFirestore();
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
             await fillHoraFiltroDynamic({ keepSelection: true });
 
             const apps = await fetchAppointmentsDay(ymd);
@@ -746,7 +873,11 @@ export function initAgendaTab() {
                             });
 
                             if (!ok) {
+<<<<<<< HEAD
                                 showNotification("Esse horário conflita com outro agendamento/bloqueio pelo tempo do serviço.", "error");
+=======
+                                showNotification("Esse horário conflita com outro agendamento/bloqueio OU cai no intervalo.", "error");
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                                 return false;
                             }
                         } catch (e) {
@@ -902,6 +1033,12 @@ export function initAgendaTab() {
                             // valida conflito por duração (considerando outros horários do dia)
                             try {
                                 const ymd = dataFiltro.value;
+<<<<<<< HEAD
+=======
+
+                                await loadBusinessHoursFromFirestore();
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                                 const av = await getDayAvailabilityForColecao(ymd, colecao);
                                 if (!av.aberto) {
                                     showNotification("Dia fechado para este profissional.", "error");
@@ -921,7 +1058,11 @@ export function initAgendaTab() {
                                 });
 
                                 if (!ok) {
+<<<<<<< HEAD
                                     showNotification("Esse agendamento conflita com outro horário pelo tempo do serviço.", "error");
+=======
+                                    showNotification("Esse agendamento conflita com outro horário OU cai no intervalo.", "error");
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
                                     return false;
                                 }
                             } catch (e) {
@@ -1152,6 +1293,12 @@ export function initAgendaTab() {
             profissionalSelect.value = "todos";
         }
 
+<<<<<<< HEAD
+=======
+        // ✅ carrega intervalo antes de montar os horários
+        await loadBusinessHoursFromFirestore();
+
+>>>>>>> 6a7bbd6e8442a1c53a605d179a5c5b4fa972087c
         await fillHoraFiltroDynamic({ keepSelection: false });
         await buscarAgenda();
     })();
