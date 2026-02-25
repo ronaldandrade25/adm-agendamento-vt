@@ -660,13 +660,258 @@
                 <p>Cadastre dias e horários de trabalho, exceções, serviços e profissionais.</p>
             </header>
 
-            <!-- (seu conteúdo de configurações permanece igual) -->
+            <!-- ✅ AJUSTE: conteúdo REAL da aba Configurações (com TODOS os IDs que o configuracoes.js espera) -->
             <div class="grid-2">
-                <!-- ... SEU BLOCO CONFIG COMPLETO (mantido) ... -->
-                <!-- Para economizar espaço aqui, mantive o mesmo HTML que você enviou sem alterações. -->
-                <!-- NÃO REMOVA nada daqui no seu arquivo: cole o bloco original completo. -->
+                <!-- Horário do painel -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Horário do painel</h2>
+                        <p class="card-subtitle">Define o início e fim do expediente (gera horários da agenda).</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="cfgInicio">Início</label>
+                                <input id="cfgInicio" type="time" value="09:00" />
+                            </div>
+                            <div class="field">
+                                <label for="cfgFim">Fim</label>
+                                <input id="cfgFim" type="time" value="19:00" />
+                            </div>
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button id="cfgSalvarHorario" class="btn btn-edit" type="button">
+                                    <i class="bx bx-save"></i> Salvar horário
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- COLE AQUI o mesmo conteúdo do seu configMain (que você já enviou) sem mudanças -->
+                <!-- Semana -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Semana (dias de trabalho)</h2>
+                        <p class="card-subtitle">Define dias padrão e o intervalo padrão do dia.</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="cfgWeekdays" class="form-grid">
+                            <div class="field">
+                                <label>Selecione os dias</label>
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="1" /> Seg
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="2" /> Ter
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="3" /> Qua
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="4" /> Qui
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="5" /> Sex
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="6" /> Sáb
+                                    </label>
+                                    <label class="muted" style="display:flex;gap:8px;align-items:center;">
+                                        <input type="checkbox" value="0" /> Dom
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="cfgDayStart">Início do dia</label>
+                                <input id="cfgDayStart" type="time" value="09:00" />
+                            </div>
+                            <div class="field">
+                                <label for="cfgDayEnd">Fim do dia</label>
+                                <input id="cfgDayEnd" type="time" value="19:00" />
+                            </div>
+
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button id="cfgSalvarSemana" class="btn btn-edit" type="button">
+                                    <i class="bx bx-save"></i> Salvar semana
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exceções -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <h2>Exceções (folgas / horários especiais)</h2>
+                        <p class="card-subtitle">Crie exceções por dia (salão geral ou por profissional).</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="cfgExDate">Data</label>
+                                <input id="cfgExDate" type="date" />
+                            </div>
+                            <div class="field">
+                                <label for="cfgExStart">Início</label>
+                                <input id="cfgExStart" type="time" />
+                            </div>
+                            <div class="field">
+                                <label for="cfgExEnd">Fim</label>
+                                <input id="cfgExEnd" type="time" />
+                            </div>
+
+                            <div class="field">
+                                <label style="display:flex;gap:10px;align-items:center;">
+                                    <input id="cfgExClosed" type="checkbox" />
+                                    Dia fechado
+                                </label>
+                                <small class="muted">Se marcar, ignora início/fim.</small>
+                            </div>
+
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button id="cfgAddException" class="btn btn-edit" type="button">
+                                    <i class="bx bx-plus"></i> Adicionar exceção
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper" style="margin-top:12px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                        <th style="width:120px;text-align:right;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cfgExceptionsTbody">
+                                    <tr>
+                                        <td colspan="5" class="loading-row">Carregando exceções...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profissionais -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Profissionais</h2>
+                        <p class="card-subtitle">Cadastre e edite profissionais (nome, WhatsApp, ativo, foto URL opcional).</p>
+                    </div>
+                    <div class="card-body">
+                        <input id="profEditId" type="hidden" />
+
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="profNome">Nome</label>
+                                <input id="profNome" placeholder="Nome do profissional" />
+                            </div>
+
+                            <div class="field">
+                                <label for="profWpp">WhatsApp</label>
+                                <input id="profWpp" placeholder="(00) 00000-0000" />
+                            </div>
+
+                            <div class="field">
+                                <label for="profFotoUrl">Foto (URL opcional)</label>
+                                <input id="profFotoUrl" placeholder="https://..." />
+                            </div>
+
+                            <!-- existe no JS (vai esconder se aparecer), mantemos pra não quebrar nada -->
+                            <div class="field">
+                                <label for="profFotoFile">Foto (arquivo)</label>
+                                <input id="profFotoFile" type="file" accept="image/*" />
+                            </div>
+
+                            <div class="field">
+                                <label style="display:flex;gap:10px;align-items:center;">
+                                    <input id="profAtivo" type="checkbox" checked />
+                                    Ativo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+                            <button id="profSalvar" class="btn btn-edit" type="button"><i class="bx bx-save"></i> Salvar profissional</button>
+                            <button id="profCancelarEdicao" class="btn btn-light" type="button"><i class="bx bx-eraser"></i> Cancelar edição</button>
+                        </div>
+
+                        <div class="table-wrapper" style="margin-top:12px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:70px;">Foto</th>
+                                        <th>Nome</th>
+                                        <th>Coleção</th>
+                                        <th style="width:90px;">Ativo</th>
+                                        <th style="width:140px;text-align:right;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="profTbody">
+                                    <tr>
+                                        <td colspan="5" class="loading-row">Carregando profissionais...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Serviços -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Serviços</h2>
+                        <p class="card-subtitle">Cadastre serviços (valor e tempo em minutos).</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="svcNome">Nome</label>
+                                <input id="svcNome" placeholder="Ex.: Corte, Barba..." />
+                            </div>
+                            <div class="field">
+                                <label for="svcValor">Valor (R$)</label>
+                                <input id="svcValor" type="number" step="0.01" />
+                            </div>
+                            <div class="field">
+                                <label for="svcTempo">Tempo (min)</label>
+                                <input id="svcTempo" type="number" step="1" min="5" value="30" />
+                            </div>
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button id="svcSalvar" class="btn btn-edit" type="button">
+                                    <i class="bx bx-save"></i> Salvar serviço
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper" style="margin-top:12px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Serviço</th>
+                                        <th>Valor</th>
+                                        <th>Tempo</th>
+                                        <th style="width:120px;text-align:right;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="svcTbody">
+                                    <tr>
+                                        <td colspan="4" class="loading-row">Carregando serviços...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
