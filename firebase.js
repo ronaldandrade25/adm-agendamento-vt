@@ -243,7 +243,7 @@ export async function waitForAuth() {
 }
 
 /* ========= Estado compartilhado ========= */
-export const BOOKING_URL = "https://barbeariaratorre2.vercel.app/";
+export const BOOKING_URL = ""; // link do site de agendamento externo (se houver)
 
 export const PAYMENT_METHODS = [
   "PIX",
