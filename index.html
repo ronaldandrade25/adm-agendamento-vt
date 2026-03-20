@@ -22,20 +22,6 @@
     <!-- Notificações (toasts) -->
     <div id="notification-container"></div>
 
-    <!-- Gate de Login -->
-    <div id="authGate" class="auth-gate">
-        <div class="auth-card">
-            <h2>Entrar no painel</h2>
-            <p class="auth-sub">Use o e-mail de administrador cadastrado.</p>
-            <label for="authEmail">E-mail</label>
-            <input id="authEmail" type="email" autocomplete="email" />
-            <label for="authPassword">Senha</label>
-            <input id="authPassword" type="password" autocomplete="current-password" />
-            <div id="authError" class="auth-error"></div>
-            <button id="authSubmit" class="btn-auth">Entrar</button>
-        </div>
-    </div>
-
     <!-- Header / Navegação -->
     <header class="app-header">
         <nav class="app-nav">
@@ -62,12 +48,6 @@
                 </button>
                 <button type="button" class="tab-btn" data-tab="config">
                     <i class="bx bx-cog"></i> Configurações
-                </button>
-            </div>
-
-            <div class="header-right">
-                <button id="logoutBtn" class="btn btn-light" title="Sair">
-                    <i class="bx bx-log-out"></i> Sair
                 </button>
             </div>
         </nav>
@@ -179,7 +159,6 @@
                             <i class="bx bx-download"></i> Exportar CSV (Serviços)
                         </button>
 
-                        <!-- (mantido) botão opcional para abrir modal -->
                         <button id="openResumoGeralModal" class="btn btn-light">
                             <i class="bx bx-receipt"></i> Resumo geral / Despesas
                         </button>
@@ -187,7 +166,6 @@
                 </div>
             </div>
 
-            <!-- KPIs (serviços) -->
             <div class="kpis">
                 <div class="kpi">
                     <span class="kpi-label">Agendamentos</span>
@@ -253,7 +231,6 @@
                 </div>
             </div>
 
-            <!-- Vendas de produtos por profissional -->
             <div class="card card-product-report">
                 <div class="card-header">
                     <h2>Vendas de produtos por profissional</h2>
@@ -277,7 +254,6 @@
                 </div>
             </div>
 
-            <!-- ✅✅✅ NOVO (VISÍVEL NA ABA): Resumo geral de gestão -->
             <div class="card card-management">
                 <div class="card-header">
                     <h2>Resumo geral de gestão</h2>
@@ -339,7 +315,6 @@
                 </div>
             </div>
 
-            <!-- ✅✅✅ NOVO (VISÍVEL NA ABA): Saídas / Despesas -->
             <div class="card card-expenses" style="margin-top:14px;">
                 <div class="card-header">
                     <h2>Saídas / Despesas</h2>
@@ -347,7 +322,6 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- Mantém IDs padrão usados em scripts (expenseForm etc.) -->
                     <form id="expenseForm" class="form-grid expense-form">
                         <div class="form-row">
                             <div class="field">
@@ -538,12 +512,10 @@
                             <input id="pdvProdValor" type="number" step="0.01" />
                         </div>
 
-                        <!-- ✅✅✅ AJUSTE (NOVO): Estoque -->
                         <div class="field">
                             <label for="pdvProdEstoque">Estoque</label>
                             <input id="pdvProdEstoque" type="number" step="1" min="0" value="0" />
                         </div>
-                        <!-- ✅✅✅ /AJUSTE -->
                     </div>
 
                     <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -609,7 +581,6 @@
                     <h2>Últimas vendas</h2>
                 </div>
 
-                <!-- ✅✅✅ AJUSTE PDV (NOVO): filtros De / Até + botão Filtrar -->
                 <div class="card-body">
                     <div class="form-grid" style="margin-bottom:12px;">
                         <div class="field">
@@ -647,7 +618,6 @@
                         </table>
                     </div>
                 </div>
-                <!-- ✅✅✅ /AJUSTE PDV -->
             </div>
         </section>
     </main>
@@ -660,45 +630,21 @@
                 <p>Cadastre dias e horários de trabalho, exceções, serviços e profissionais.</p>
             </header>
 
-            <!-- ✅ AJUSTE: conteúdo REAL da aba Configurações (com TODOS os IDs que o configuracoes.js espera) -->
             <div class="grid-2">
-                <!-- Horário do painel -->
-                <div class="card">
+
+                <div class="card" style="grid-column: 1 / -1;">
                     <div class="card-header">
-                        <h2>Horário do painel</h2>
-                        <p class="card-subtitle">Define o início e fim do expediente (gera horários da agenda).</p>
+                        <h2>Funcionamento (dias + horários + intervalo + pausa)</h2>
+                        <p class="card-subtitle">
+                            Defina os dias, o horário padrão do dia, intervalo (min) e uma pausa opcional (ex.: almoço).
+                        </p>
                     </div>
+
                     <div class="card-body">
                         <div class="form-grid">
-                            <div class="field">
-                                <label for="cfgInicio">Início</label>
-                                <input id="cfgInicio" type="time" value="09:00" />
-                            </div>
-                            <div class="field">
-                                <label for="cfgFim">Fim</label>
-                                <input id="cfgFim" type="time" value="19:00" />
-                            </div>
-                            <div class="field">
-                                <label>&nbsp;</label>
-                                <button id="cfgSalvarHorario" class="btn btn-edit" type="button">
-                                    <i class="bx bx-save"></i> Salvar horário
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Semana -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Semana (dias de trabalho)</h2>
-                        <p class="card-subtitle">Define dias padrão e o intervalo padrão do dia.</p>
-                    </div>
-                    <div class="card-body">
-                        <div id="cfgWeekdays" class="form-grid">
-                            <div class="field">
+                            <div class="field" style="grid-column: 1 / -1;">
                                 <label>Selecione os dias</label>
-                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <div id="cfgWeekdays" style="display:flex;gap:12px;flex-wrap:wrap;">
                                     <label class="muted" style="display:flex;gap:8px;align-items:center;">
                                         <input type="checkbox" value="1" /> Seg
                                     </label>
@@ -727,22 +673,58 @@
                                 <label for="cfgDayStart">Início do dia</label>
                                 <input id="cfgDayStart" type="time" value="09:00" />
                             </div>
+
                             <div class="field">
                                 <label for="cfgDayEnd">Fim do dia</label>
                                 <input id="cfgDayEnd" type="time" value="19:00" />
                             </div>
 
                             <div class="field">
-                                <label>&nbsp;</label>
-                                <button id="cfgSalvarSemana" class="btn btn-edit" type="button">
-                                    <i class="bx bx-save"></i> Salvar semana
+                                <label for="cfgIntervalMin">Intervalo (min)</label>
+                                <input id="cfgIntervalMin" type="number" min="5" step="5" value="25" />
+                                <small class="muted">Ex.: 15, 20, 25, 30…</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cfgBreakStart">Pausa (início)</label>
+                                <input id="cfgBreakStart" type="time" placeholder="12:00" />
+                                <small class="muted">Opcional (ex.: almoço)</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cfgBreakEnd">Pausa (fim)</label>
+                                <input id="cfgBreakEnd" type="time" placeholder="14:00" />
+                                <small class="muted">Opcional (ex.: almoço)</small>
+                            </div>
+
+                            <div class="field" style="display:none;">
+                                <label for="cfgInicio">Início do painel</label>
+                                <input id="cfgInicio" type="time" value="09:00" />
+                            </div>
+
+                            <div class="field" style="display:none;">
+                                <label for="cfgFim">Fim do painel</label>
+                                <input id="cfgFim" type="time" value="19:00" />
+                            </div>
+
+                            <div class="field" style="grid-column: 1 / -1; display:flex; gap:10px; flex-wrap:wrap;">
+                                <button id="cfgSalvarSemana" class="btn btn-edit" type="button"
+                                    onclick="document.getElementById('cfgSalvarHorario')?.click()">
+                                    <i class="bx bx-save"></i> Salvar funcionamento
+                                </button>
+
+                                <button id="cfgSalvarHorario" class="btn btn-light" type="button" style="display:none;">
+                                    <i class="bx bx-save"></i> Salvar (painel)
                                 </button>
                             </div>
+
+                            <small class="muted" style="grid-column: 1 / -1; display:block;">
+                                Obs: “Salvar funcionamento” agora salva Semana + Horário + Intervalo + Pausa (almoço), tudo de uma vez.
+                            </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Exceções -->
                 <div class="card" style="grid-column: 1 / -1;">
                     <div class="card-header">
                         <h2>Exceções (folgas / horários especiais)</h2>
@@ -800,7 +782,6 @@
                     </div>
                 </div>
 
-                <!-- Profissionais -->
                 <div class="card">
                     <div class="card-header">
                         <h2>Profissionais</h2>
@@ -825,7 +806,6 @@
                                 <input id="profFotoUrl" placeholder="https://..." />
                             </div>
 
-                            <!-- existe no JS (vai esconder se aparecer), mantemos pra não quebrar nada -->
                             <div class="field">
                                 <label for="profFotoFile">Foto (arquivo)</label>
                                 <input id="profFotoFile" type="file" accept="image/*" />
@@ -865,7 +845,6 @@
                     </div>
                 </div>
 
-                <!-- Serviços -->
                 <div class="card">
                     <div class="card-header">
                         <h2>Serviços</h2>
@@ -912,11 +891,11 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </section>
     </main>
 
-    <!-- ✅✅✅ MODAL: Resumo Geral + Saídas / Despesas (mantido como você enviou) -->
     <div id="resumoGeralModal" class="modal hidden">
         <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="resumoGeralTitle">
             <header class="modal-header">
@@ -1030,7 +1009,6 @@
         </div>
     </div>
 
-    <!-- Modal genérico -->
     <div id="mainModal" class="modal hidden">
         <div class="modal-dialog">
             <header class="modal-header">
@@ -1042,8 +1020,30 @@
         </div>
     </div>
 
-    <!-- Script principal -->
     <script type="module" src="./firebase.js"></script>
+
+    <script>
+        (function () {
+            function syncTimes() {
+                const dayStart = document.getElementById("cfgDayStart");
+                const dayEnd = document.getElementById("cfgDayEnd");
+                const panelStart = document.getElementById("cfgInicio");
+                const panelEnd = document.getElementById("cfgFim");
+                if (!dayStart || !dayEnd || !panelStart || !panelEnd) return;
+
+                panelStart.value = dayStart.value || panelStart.value;
+                panelEnd.value = dayEnd.value || panelEnd.value;
+            }
+
+            document.addEventListener("change", (e) => {
+                if (e.target && (e.target.id === "cfgDayStart" || e.target.id === "cfgDayEnd")) {
+                    syncTimes();
+                }
+            });
+
+            window.addEventListener("load", syncTimes);
+        })();
+    </script>
 </body>
 
 </html>

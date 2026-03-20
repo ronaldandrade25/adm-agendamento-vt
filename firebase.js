@@ -1,14 +1,7 @@
 // /js/firebase.js (ESM)
-// ✅ Arquivo "central" com Firebase + Auth + Helpers + Modal + Tabs + Estado compartilhado
+// ✅ Arquivo "central" com Firebase + Helpers + Modal + Tabs + Estado compartilhado
+// ✅ Sem login / sem Auth Gate
 // ✅ Importa e inicia as abas (agenda/relatorios/clientes/pdv/config)
-//
-// ✅ AJUSTES ADICIONADOS (sem remover nada do que você já tinha):
-// 1) Helpers extras para datas/ymd e dinheiro (útil para Gestão/Despesas)
-// 2) Constantes de collections para Despesas/Vendas (útil pros módulos)
-// 3) Bind do MODAL "Resumo geral / Despesas" (abrir/fechar sem depender de outros módulos)
-// 4) setDefaultDates agora também preenche datas de despesas (expenseDate e expData)
-// 5) Auth Gate mais robusto (compara admin em lowercase)
-//    (não quebra: mantém lógica, só evita erro por letras maiúsculas/minúsculas)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -27,14 +20,8 @@ import {
   updateDoc,
   where,
   Timestamp,
-  limit, // ✅✅✅ AJUSTE: necessário pro PDV (filtro/listagem)
+  limit,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ✅ Storage (necessário para upload de foto do profissional)
 import {
@@ -64,14 +51,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-export const auth = getAuth(app);
 
 // ✅ Storage exports
 export const storage = getStorage(app);
 export { ref, uploadBytes, getDownloadURL };
-
-/* ========= Admins ========= */
-export const ADMINS = ["andraderonald685@gmail.com"];
 
 /* ========= Helpers ========= */
 export const $ = (s) => document.querySelector(s);
@@ -93,11 +76,11 @@ export const formatDate = (tsOrDate) => {
   return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 };
 
-// ✅ NOVO helper: YYYY-MM-DD -> DD/MM/YYYY (quando você tiver string ymd)
+// ✅ NOVO helper: YYYY-MM-DD -> DD/MM/YYYY
 export const ymdToDateStr = (ymd) => {
   if (!ymd) return "";
   const [y, m, d] = String(ymd).split("-");
-  return `${pad2(d)}\/${pad2(m)}\/${y}`;
+  return `${pad2(d)}/${pad2(m)}/${y}`;
 };
 
 // ✅ NOVO helper: hoje em YYYY-MM-DD
@@ -134,7 +117,7 @@ export function slugify(str) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9_]+/g, "_") // preserva "_"
+    .replace(/[^a-z0-9_]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .replace(/_+/g, "_");
 }
@@ -195,9 +178,7 @@ modalEl?.addEventListener("click", (e) => {
 });
 
 /* ============================================================
-   ✅ NOVO: Modal "Resumo geral / Despesas" (abre/fecha)
-   - Não interfere no seu mainModal (é outro modal)
-   - Apenas gerencia visibilidade e dispara evento para módulos atualizarem
+   ✅ Modal "Resumo geral / Despesas" (abre/fecha)
 ============================================================ */
 function bindResumoGeralModal() {
   const modal = $("#resumoGeralModal");
@@ -208,7 +189,6 @@ function bindResumoGeralModal() {
   const show = () => {
     if (!modal) return;
     modal.classList.remove("hidden");
-    // dispara evento para o relatorios.js (ou outro módulo) atualizar dados ao abrir
     window.dispatchEvent(new CustomEvent("resumoGeral:open"));
   };
 
@@ -233,11 +213,9 @@ function bindResumoGeralModal() {
   });
 
   modal?.addEventListener("click", (e) => {
-    // fecha clicando no fundo
     if (e.target === modal) hide();
   });
 
-  // opcional: ESC para fechar
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal && !modal.classList.contains("hidden")) hide();
   });
@@ -259,81 +237,10 @@ export function showTab(tab) {
   });
 }
 
-/* ========= DOM Auth ========= */
-const authGate = $("#authGate");
-const authEmail = $("#authEmail");
-const authPassword = $("#authPassword");
-const authSubmit = $("#authSubmit");
-const authError = $("#authError");
-const logoutBtn = $("#logoutBtn");
-
-/* ========= Auth Gate ========= */
-let _authReadyResolve;
-export const authReady = new Promise((res) => (_authReadyResolve = res));
-
-export function toggleGate(show) {
-  if (!authGate) return;
-  if (show) authGate.classList.remove("hidden");
-  else authGate.classList.add("hidden");
-}
-
+/* ========= Sem autenticação ========= */
 export async function waitForAuth() {
-  return authReady;
+  return true;
 }
-
-// ✅ Robustez: compara lowercase (não quebra)
-function isAdminEmail(email) {
-  const e = String(email || "").trim().toLowerCase();
-  return ADMINS.map((x) => String(x || "").toLowerCase()).includes(e);
-}
-
-onAuthStateChanged(auth, (user) => {
-  const ok = !!user && isAdminEmail(user.email || "");
-  if (ok) {
-    toggleGate(false);
-    logoutBtn?.classList.remove("hidden");
-    _authReadyResolve?.(user);
-  } else {
-    toggleGate(true);
-    logoutBtn?.classList.add("hidden");
-  }
-});
-
-authSubmit?.addEventListener("click", async () => {
-  if (!authEmail?.value || !authPassword?.value) {
-    if (authError) authError.textContent = "Preencha e-mail e senha.";
-    return;
-  }
-  authSubmit.disabled = true;
-  if (authError) authError.textContent = "";
-
-  try {
-    await signInWithEmailAndPassword(auth, authEmail.value.trim(), authPassword.value);
-  } catch (err) {
-    console.error(err);
-    const code = String(err?.code || "");
-    if (authError) {
-      if (code.includes("auth/invalid-credential")) authError.textContent = "E-mail ou senha inválidos.";
-      else authError.textContent = "Falha no login. Verifique e-mail e senha.";
-    }
-  } finally {
-    authSubmit.disabled = false;
-  }
-});
-
-authPassword?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") authSubmit?.click();
-});
-
-logoutBtn?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    showNotification("Sessão encerrada.", "success");
-  } catch (err) {
-    console.error(err);
-    showNotification("Erro ao sair.", "error");
-  }
-});
 
 /* ========= Estado compartilhado ========= */
 export const BOOKING_URL = "https://barbeariaratorre2.vercel.app/";
@@ -355,7 +262,7 @@ export const state = {
   HOURS: [],
   SERVICOS: [],
   PROFESSIONALS: [],
-  CFG_WEEK: null, // { weekdays, dayStart, dayEnd }
+  CFG_WEEK: null,
   allClients: [],
   pdvProducts: [],
   reportCache: [],
@@ -398,15 +305,14 @@ export const COL_SERVICOS = collection(db, "servicos");
 export const COL_PROF = collection(db, "profissionais");
 
 /**
- * ✅✅✅ EXCEÇÕES (PADRÃO ÚNICO)
- * Vamos usar:
- *   /config/excecoes/dias/{ymd}
+ * ✅ EXCEÇÕES (PADRÃO ÚNICO)
+ * /config/excecoes/dias/{ymd}
  */
 export const CFG_DOC_EXCECOES = doc(db, "config", "excecoes");
 export const CFG_COL_EXCECOES = collection(db, "config", "excecoes", "dias");
 export const cfgExcecaoDoc = (ymd) => doc(db, "config", "excecoes", "dias", String(ymd || ""));
 
-// ✅ NOVO: Collections para Gestão/Despesas (útil pro relatorios.js depois)
+// ✅ Collections para Gestão/Despesas
 export const COL_DESPESAS = collection(db, "despesas");
 export const COL_VENDAS = collection(db, "vendas");
 
@@ -441,14 +347,13 @@ export function setSelectedColecao(colecao) {
 
 // ✅ lista só com profissionais ATIVOS + mantém seleção do usuário
 export function populateProfessionalSelects() {
-  const listAll = (state.PROFESSIONALS || []);
+  const listAll = state.PROFESSIONALS || [];
   const list = listAll.filter((p) => p && p.ativo !== false);
 
   const profissionalSelect = $("#profissionalSelect");
   const relProf = $("#relProf");
   const pdvSaleProfSelect = $("#pdvSaleProf");
 
-  // ========= AGENDA =========
   if (profissionalSelect) {
     const current = (profissionalSelect.value || "").trim();
     if (!list.length) {
@@ -466,7 +371,6 @@ export function populateProfessionalSelects() {
     }
   }
 
-  // ========= RELATÓRIOS =========
   if (relProf) {
     const current = (relProf.value || "").trim();
     if (!list.length) {
@@ -484,7 +388,6 @@ export function populateProfessionalSelects() {
     }
   }
 
-  // ========= PDV =========
   if (pdvSaleProfSelect) {
     const current = (pdvSaleProfSelect.value || "").trim();
     const firstColecao = list[0]?.colecao || ONLY_PRO.colecao;
@@ -520,12 +423,11 @@ export function bindProfessionalSync({ onAgendaChange } = {}) {
   });
 }
 
-/* ========= LISTENERS GLOBAIS (após login) ========= */
+/* ========= LISTENERS GLOBAIS ========= */
 function startGlobalListeners() {
   if (window.__globalListenersStarted) return;
   window.__globalListenersStarted = true;
 
-  // ✅ Profissionais
   onSnapshot(
     query(COL_PROF, orderBy("nome")),
     (snap) => {
@@ -552,7 +454,6 @@ function startGlobalListeners() {
     (err) => console.error("Erro listener profissionais (global):", err)
   );
 
-  // ✅ Serviços
   onSnapshot(
     query(COL_SERVICOS, orderBy("nome")),
     (snap) => {
@@ -635,7 +536,7 @@ export function openServicosModal(onSelect) {
   }
 }
 
-/* ========= Firestore exports (usados pelos módulos) ========= */
+/* ========= Firestore exports ========= */
 export {
   addDoc,
   collection,
@@ -651,7 +552,7 @@ export {
   updateDoc,
   where,
   Timestamp,
-  limit, // ✅✅✅ AJUSTE: exporta limit pro pdv.js
+  limit,
 };
 
 /* ========= INIT ========= */
@@ -659,8 +560,8 @@ function setDefaultDates() {
   const dataFiltro = $("#dataFiltro");
   const relDe = $("#relDe");
   const relAte = $("#relAte");
-  const expenseDate = $("#expenseDate"); // ✅ aba Relatórios (despesas)
-  const expData = $("#expData");         // ✅ modal Resumo Geral (despesas)
+  const expenseDate = $("#expenseDate");
+  const expData = $("#expData");
 
   const hoje = new Date();
   const y = hoje.getFullYear();
@@ -673,7 +574,6 @@ function setDefaultDates() {
   if (relDe) relDe.value = `${y}-${m}-01`;
   if (relAte) relAte.value = today;
 
-  // ✅ novo: datas padrão dos formulários de despesa
   if (expenseDate && !expenseDate.value) expenseDate.value = today;
   if (expData && !expData.value) expData.value = today;
 }
@@ -687,7 +587,6 @@ async function init() {
     });
   });
 
-  // ✅ modal resumo geral
   bindResumoGeralModal();
 
   await waitForAuth();
