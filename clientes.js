@@ -1,486 +1,470 @@
 // js/clientes.js
 import {
-    db, $, normalize, formatCurrency, showNotification, mainModal,
-    state, waitForAuth,
-    addDoc, updateDoc, deleteDoc, doc, collection, onSnapshot, query, orderBy, serverTimestamp,
-    formatDate
+  db, $, formatCurrency, showNotification, mainModal,
+  state, waitForAuth,
+  addDoc, updateDoc, deleteDoc, doc, collection, onSnapshot, query, orderBy, serverTimestamp
 } from "./firebase.js";
 
 export function initClientesTab() {
-    const clientForm = $("#clientForm");
-    const clientTableBody = $("#clientTableBody");
-    const clientSearch = $("#clientSearch");
-    const paymentsTableBody = $("#paymentsTableBody");
-    const clientTypeSelect = $("#clientType");
-    const clientValueField = $("#clientValueField");
-    const clientPayDayField = $("#clientPayDayField");
-    const clientNameInput = $("#clientName");
-    const clientPhoneInput = $("#clientPhone");
-    const clientValueInput = $("#clientValue");
-    const clientPayDayInput = $("#clientPayDay");
-    const clientFilterButtons = document.querySelectorAll(".filter-tab-btn");
-    const activeMembersSpan = $("#activeMembers");
-    const estimatedRevenueSpan = $("#estimatedRevenue");
-    const monthlyTotalSpan = $("#monthlyTotal");
+  const cliNome = $("#cliNome");
+  const cliSobrenome = $("#cliSobrenome");
+  const cliTelefone = $("#cliTelefone");
+  const cliRaclub = $("#cliRaclub");
+  const cliSalvarBtn = $("#cliSalvarBtn");
+  const cliLimparBtn = $("#cliLimparBtn");
+  const clientesTbody = $("#clientesTbody");
+  const raclubPayTbody = $("#raclubPayTbody");
 
-    if (!clientTableBody) return;
+  if (!clientesTbody) return;
 
-    function togglePlanFields() {
-        if (!clientTypeSelect) return;
-        const isPlan = clientTypeSelect.value === "plano_jc";
-        if (clientValueField) clientValueField.style.display = isPlan ? "flex" : "none";
-        if (clientPayDayField) clientPayDayField.style.display = isPlan ? "flex" : "none";
+  function onlyDigits(v) {
+    return String(v || "").replace(/\D/g, "");
+  }
+
+  function formatPhone(v) {
+    const d = onlyDigits(v).slice(0, 11);
+
+    if (d.length <= 2) return d;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+  }
+
+  function monthLabelFromDate(dateObj) {
+    const d = dateObj instanceof Date ? dateObj : new Date();
+    return d.toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
+  }
+
+  function resetClientForm() {
+    if (cliNome) cliNome.value = "";
+    if (cliSobrenome) cliSobrenome.value = "";
+    if (cliTelefone) cliTelefone.value = "";
+    if (cliRaclub) cliRaclub.value = "nao";
+    cliNome?.focus();
+  }
+
+  function mapClientDoc(id, v) {
+    const nome = (v.nome || v.name || "").trim();
+    const sobrenome = (v.sobrenome || "").trim();
+    const nomeCompleto =
+      (v.nomeCompleto || v.clientName || `${nome} ${sobrenome}`).trim() ||
+      nome ||
+      "—";
+
+    const telefone = (v.telefone || v.phone || "").trim();
+
+    const membro =
+      v.raclub === "membro" ||
+      v.raClub === "membro" ||
+      v.plano === "ra_club" ||
+      v.type === "plano_jc" ||
+      v.type === "plano_ra" ||
+      v.isPlan === true;
+
+    const status = v.status || v.situacao || (membro ? "ativo" : "nao_membro");
+    const valorMensal = Number(v.valorMensal ?? v.value ?? v.valor ?? 0);
+
+    return {
+      id,
+      nome,
+      sobrenome,
+      nomeCompleto,
+      telefone,
+      raclub: membro ? "membro" : "nao",
+      status,
+      valorMensal
+    };
+  }
+
+  function renderClients() {
+    const rows = state.allClients || [];
+
+    if (!rows.length) {
+      clientesTbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="loading-row">Nenhum cliente cadastrado.</td>
+        </tr>
+      `;
+      return;
     }
-    clientTypeSelect?.addEventListener("change", togglePlanFields);
 
-    function mapOldClientDoc(id, v) {
-        const name = v.name || v.nome || "";
-        const phone = v.phone || v.telefone || "";
-        const rawType = v.type || (v.plano ? "plano_jc" : "cliente");
-        const isPlanFlag =
-            rawType === "plano_jc" ||
-            rawType === "plano_ra" ||
-            v.plano === "ra_club" ||
-            v.plano === "PLANO_RA" ||
-            v.isPlan === true;
+    clientesTbody.innerHTML = rows
+      .map((c) => {
+        const raclubLabel =
+          c.raclub === "membro"
+            ? `<span class="status-badge status-confirmed">Membro</span>`
+            : `<span class="status-badge">Não é membro</span>`;
 
-        const type = isPlanFlag ? "plano_jc" : rawType || "cliente";
-        const value = v.value ?? v.valorMensal ?? v.valor ?? 0;
-        const payDay = v.payDay ?? v.diaPagamento ?? null;
-        const status = v.status || v.situacao || (isPlanFlag ? "ativo" : null);
-
-        return { id, name, phone, type, value, payDay, status };
-    }
-
-    function applyClientFilters() {
-        if (!clientTableBody) return;
-
-        const searchTerm = normalize(clientSearch?.value || "");
-        const activeFilter =
-            [...clientFilterButtons].find((b) => b.classList.contains("active"))?.dataset.filter || "todos";
-
-        const rows = (state.allClients || []).filter((c) => {
-            const matchesText =
-                !searchTerm || normalize(c.name).includes(searchTerm) || normalize(c.phone).includes(searchTerm);
-
-            let matchesFilter = true;
-            if (activeFilter === "clientes") matchesFilter = c.type === "cliente";
-            else if (activeFilter === "plano_jc") matchesFilter = c.type === "plano_jc";
-
-            return matchesText && matchesFilter;
-        });
-
-        if (!rows.length) {
-            clientTableBody.innerHTML = `<tr><td colspan="6" class="loading-row">${state.allClients.length ? "Nenhum cliente encontrado." : "Carregando..."}</td></tr>`;
-            return;
-        }
-
-        clientTableBody.innerHTML = rows
-            .map((c) => {
-                const tipoLabel = c.type === "plano_jc" ? "Plano RA" : "Cliente comum";
-                const status = c.type === "plano_jc" ? (c.status || "ativo") : "—";
-                const valor = c.type === "plano_jc" ? formatCurrency(c.value || 0) : "—";
-
-                return `
+        return `
           <tr>
-            <td>${c.name || "—"}</td>
-            <td>${c.phone || "—"}</td>
-            <td>${tipoLabel}</td>
-            <td>${valor}</td>
-            <td>${status}</td>
-            <td>
-              <div class="timeslot-actions">
-                <button class="btn btn-sm btn-edit" data-action="edit-client" data-id="${c.id}">
+            <td>${c.nomeCompleto || "—"}</td>
+            <td>${c.telefone || "—"}</td>
+            <td>${raclubLabel}</td>
+            <td style="text-align:right;">
+              <div class="timeslot-actions" style="justify-content:flex-end;">
+                <button class="btn btn-sm btn-edit" data-action="edit-client" data-id="${c.id}" title="Editar">
                   <i class="bx bx-pencil"></i>
                 </button>
 
-                ${c.type === "plano_jc"
-                        ? `
-                    <button class="btn btn-sm btn-success" data-action="pay-client" data-id="${c.id}">
-                      <i class="bx bx-dollar"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" data-action="toggle-status" data-id="${c.id}">
-                      <i class="bx ${(c.status || "ativo") === "ativo" ? "bx-pause" : "bx-play"}"></i>
-                    </button>
-                  `
-                        : ""
-                    }
+                ${
+                  c.raclub === "membro"
+                    ? `
+                  <button class="btn btn-sm btn-success" data-action="pay-client" data-id="${c.id}" title="Registrar pagamento">
+                    <i class="bx bx-dollar"></i>
+                  </button>
+                `
+                    : ""
+                }
 
-                ${c.type === "cliente"
-                        ? `
-                    <button class="btn btn-sm btn-del" data-action="delete-client" data-id="${c.id}">
-                      <i class="bx bx-trash"></i>
-                    </button>
-                  `
-                        : ""
-                    }
+                <button class="btn btn-sm btn-del" data-action="delete-client" data-id="${c.id}" title="Excluir">
+                  <i class="bx bx-trash"></i>
+                </button>
               </div>
             </td>
           </tr>
         `;
-            })
-            .join("");
+      })
+      .join("");
+  }
+
+  function renderPayments(payments) {
+    if (!raclubPayTbody) return;
+
+    if (!payments.length) {
+      raclubPayTbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="loading-row">Sem pagamentos para exibir.</td>
+        </tr>
+      `;
+      return;
     }
 
-    function updateClientKPIs() {
-        const activePlanMembers = (state.allClients || []).filter(
-            (c) => c.type === "plano_jc" && (c.status || "ativo") === "ativo"
-        );
-        if (activeMembersSpan) activeMembersSpan.textContent = String(activePlanMembers.length);
+    raclubPayTbody.innerHTML = payments
+      .map((p) => {
+        const ts = p.date || p.dataPagamento || p.createdAt;
+        const d = ts?.toDate ? ts.toDate() : null;
+        const mes = d ? monthLabelFromDate(d) : "—";
+        const valor = Number(p.value ?? p.valor ?? 0);
+        const cliente = p.clientName || p.nomeCliente || p.nome || "—";
+        const status = p.status || "Pago";
 
-        const total = activePlanMembers.reduce((sum, c) => sum + (Number(c.value) || 0), 0);
-        if (estimatedRevenueSpan) estimatedRevenueSpan.textContent = formatCurrency(total);
+        return `
+          <tr>
+            <td>${cliente}</td>
+            <td>${mes}</td>
+            <td>${formatCurrency(valor)}</td>
+            <td>${status}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  async function saveClient() {
+    await waitForAuth();
+
+    const nome = (cliNome?.value || "").trim();
+    const sobrenome = (cliSobrenome?.value || "").trim();
+    const telefone = formatPhone(cliTelefone?.value || "");
+    const raclub = cliRaclub?.value || "nao";
+
+    if (!nome) {
+      showNotification("Informe o nome do cliente.", "error");
+      cliNome?.focus();
+      return;
     }
 
-    clientSearch?.addEventListener("input", applyClientFilters);
-    clientFilterButtons?.forEach((btn) => {
-        btn.addEventListener("click", () => {
-            clientFilterButtons.forEach((b) => b.classList.remove("active"));
-            btn.classList.add("active");
-            applyClientFilters();
-        });
-    });
+    const nomeCompleto = `${nome} ${sobrenome}`.trim();
+    const isMember = raclub === "membro";
 
-    // salvar novo cliente
-    clientForm?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        await waitForAuth();
+    const payload = {
+      nome,
+      sobrenome,
+      nomeCompleto,
+      telefone,
+      raclub,
+      status: isMember ? "ativo" : "nao_membro",
+      createdAt: serverTimestamp(),
 
-        const name = (clientNameInput?.value || "").trim();
-        if (!name) return showNotification("Informe o nome do cliente.", "error");
+      // compatibilidade com estrutura antiga
+      name: nomeCompleto,
+      phone: telefone,
+      type: isMember ? "plano_jc" : "cliente",
+      plano: isMember ? "ra_club" : "cliente",
+      isPlan: isMember,
+      valorMensal: 0,
+      diaPagamento: null,
+      situacao: isMember ? "ativo" : "nao_membro"
+    };
 
-        const type = clientTypeSelect?.value || "cliente";
-        const phone = (clientPhoneInput?.value || "").trim();
-        const isPlan = type === "plano_jc";
-        const value = isPlan ? Number(clientValueInput?.value || 0) : 0;
-        const payDay = isPlan ? Number(clientPayDayInput?.value || 0) : null;
-        const status = isPlan ? "ativo" : null;
+    try {
+      await addDoc(collection(db, "raclub_clients"), payload);
+      resetClientForm();
+      showNotification("Cliente salvo com sucesso!", "success");
+    } catch (err) {
+      console.error("Erro ao salvar cliente:", err);
+      showNotification("Erro ao salvar cliente.", "error");
+    }
+  }
 
-        const dataFirestore = {
-            name,
-            phone,
-            type,
-            value,
-            payDay,
-            status,
-            createdAt: serverTimestamp(),
+  async function deleteClient(id) {
+    const client = (state.allClients || []).find((c) => c.id === id);
+    if (!client) return;
 
-            // compat antigo:
-            nome: name,
-            telefone: phone,
-            valorMensal: value,
-            diaPagamento: payDay,
-            situacao: status,
-            plano: isPlan ? "ra_club" : "cliente",
-        };
-
-        try {
-            await addDoc(collection(db, "raclub_clients"), dataFirestore);
-            clientForm.reset();
-            if (clientTypeSelect) clientTypeSelect.value = "cliente";
-            togglePlanFields();
-            showNotification("Cliente salvo com sucesso!", "success");
-        } catch (err) {
-            console.error(err);
-            showNotification("Erro ao salvar cliente.", "error");
+    mainModal.show({
+      title: "Excluir cliente",
+      body: `<p>Tem certeza que deseja excluir <strong>${client.nomeCompleto}</strong>?</p>`,
+      buttons: [
+        { text: "Cancelar", class: "btn-light" },
+        {
+          text: "Excluir",
+          class: "btn-del",
+          onClick: async () => {
+            await waitForAuth();
+            try {
+              await deleteDoc(doc(db, "raclub_clients", id));
+              showNotification("Cliente excluído com sucesso!", "success");
+            } catch (err) {
+              console.error("Erro ao excluir cliente:", err);
+              showNotification("Erro ao excluir cliente.", "error");
+            }
+          }
         }
+      ]
     });
+  }
 
-    clientTableBody?.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-action]");
-        if (!btn) return;
-        const { action, id } = btn.dataset;
-        if (!id) return;
+  async function openEditClientModal(id) {
+    const client = (state.allClients || []).find((c) => c.id === id);
+    if (!client) return;
 
-        if (action === "edit-client") openEditClientModal(id);
-        if (action === "toggle-status") toggleClientStatus(id);
-        if (action === "pay-client") openPaymentModalForClient(id);
-        if (action === "delete-client") deleteClient(id);
-    });
-
-    async function openEditClientModal(id) {
-        const client = (state.allClients || []).find((c) => c.id === id);
-        if (!client) return;
-
-        mainModal.show({
-            title: "Editar cliente",
-            body: `
+    mainModal.show({
+      title: "Editar cliente",
+      body: `
         <div class="form-grid">
           <div class="field">
             <label>Nome</label>
-            <input id="editClientName" value="${client.name || ""}" />
+            <input id="editCliNome" value="${client.nome || ""}" />
           </div>
+
+          <div class="field">
+            <label>Sobrenome</label>
+            <input id="editCliSobrenome" value="${client.sobrenome || ""}" />
+          </div>
+
           <div class="field">
             <label>Telefone</label>
-            <input id="editClientPhone" value="${client.phone || ""}" />
+            <input id="editCliTelefone" value="${client.telefone || ""}" />
           </div>
+
           <div class="field">
-            <label>Tipo</label>
-            <select id="editClientType">
-              <option value="cliente" ${client.type === "cliente" ? "selected" : ""}>Cliente comum</option>
-              <option value="plano_jc" ${client.type === "plano_jc" ? "selected" : ""}>Plano RA</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Valor plano (R$)</label>
-            <input id="editClientValue" type="number" step="0.01" value="${client.value || 0}" />
-          </div>
-          <div class="field">
-            <label>Dia do pagamento</label>
-            <input id="editClientPayDay" type="number" min="1" max="31" value="${client.payDay || ""}" />
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="editClientStatus">
-              <option value="">—</option>
-              <option value="ativo" ${(client.status || "ativo") === "ativo" ? "selected" : ""}>Ativo</option>
-              <option value="pausado" ${client.status === "pausado" ? "selected" : ""}>Pausado</option>
+            <label>RA Club</label>
+            <select id="editCliRaclub">
+              <option value="nao" ${client.raclub === "nao" ? "selected" : ""}>Não é membro</option>
+              <option value="membro" ${client.raclub === "membro" ? "selected" : ""}>Membro</option>
             </select>
           </div>
         </div>
       `,
-            buttons: [
-                { text: "Cancelar", class: "btn-light" },
-                {
-                    text: "Salvar",
-                    class: "btn-edit",
-                    onClick: async () => {
-                        await waitForAuth();
-                        const name = $("#editClientName").value.trim();
-                        if (!name) {
-                            showNotification("Nome é obrigatório.", "error");
-                            return false;
-                        }
-                        const type = $("#editClientType").value;
-                        const phone = $("#editClientPhone").value.trim();
-                        const value = Number($("#editClientValue").value || 0);
-                        const payDay = Number($("#editClientPayDay").value || 0) || null;
-                        const status = $("#editClientStatus").value || null;
+      buttons: [
+        { text: "Cancelar", class: "btn-light" },
+        {
+          text: "Salvar",
+          class: "btn-edit",
+          onClick: async () => {
+            await waitForAuth();
 
-                        const isPlan = type === "plano_jc";
+            const nome = ($("#editCliNome")?.value || "").trim();
+            const sobrenome = ($("#editCliSobrenome")?.value || "").trim();
+            const telefone = formatPhone($("#editCliTelefone")?.value || "");
+            const raclub = $("#editCliRaclub")?.value || "nao";
 
-                        try {
-                            await updateDoc(doc(db, "raclub_clients", id), {
-                                name,
-                                phone,
-                                type,
-                                value: isPlan ? value : 0,
-                                payDay: isPlan ? payDay : null,
-                                status: isPlan ? status || "ativo" : null,
+            if (!nome) {
+              showNotification("Informe o nome do cliente.", "error");
+              return false;
+            }
 
-                                // compat antigo:
-                                nome: name,
-                                telefone: phone,
-                                valorMensal: isPlan ? value : 0,
-                                diaPagamento: isPlan ? payDay : null,
-                                situacao: isPlan ? (status || "ativo") : null,
-                                plano: isPlan ? "ra_club" : "cliente",
-                            });
-                            showNotification("Cliente atualizado!", "success");
-                        } catch (err) {
-                            console.error(err);
-                            showNotification("Erro ao atualizar cliente.", "error");
-                        }
-                    },
-                },
-            ],
-        });
-    }
+            const nomeCompleto = `${nome} ${sobrenome}`.trim();
+            const isMember = raclub === "membro";
 
-    async function toggleClientStatus(id) {
-        const client = (state.allClients || []).find((c) => c.id === id);
-        if (!client) return;
+            try {
+              await updateDoc(doc(db, "raclub_clients", id), {
+                nome,
+                sobrenome,
+                nomeCompleto,
+                telefone,
+                raclub,
+                status: isMember ? "ativo" : "nao_membro",
 
-        const curr = client.status || "ativo";
-        const next = curr === "ativo" ? "pausado" : "ativo";
+                // compatibilidade com estrutura antiga
+                name: nomeCompleto,
+                phone: telefone,
+                type: isMember ? "plano_jc" : "cliente",
+                plano: isMember ? "ra_club" : "cliente",
+                isPlan: isMember,
+                situacao: isMember ? "ativo" : "nao_membro"
+              });
 
-        try {
-            await updateDoc(doc(db, "raclub_clients", id), { status: next, situacao: next });
-            showNotification("Status atualizado!", "success");
-        } catch (err) {
-            console.error(err);
-            showNotification("Erro ao atualizar status.", "error");
+              showNotification("Cliente atualizado com sucesso!", "success");
+            } catch (err) {
+              console.error("Erro ao atualizar cliente:", err);
+              showNotification("Erro ao atualizar cliente.", "error");
+              return false;
+            }
+          }
         }
-    }
+      ]
+    });
+  }
 
-    async function deleteClient(id) {
-        const client = (state.allClients || []).find((c) => c.id === id);
-        if (!client) return;
+  async function openPaymentModalForClient(id) {
+    const client = (state.allClients || []).find((c) => c.id === id);
+    if (!client) return;
 
-        mainModal.show({
-            title: "Remover cliente",
-            body: `<p>Tem certeza que deseja remover <strong>${client.name}</strong>? Essa ação não pode ser desfeita.</p>`,
-            buttons: [
-                { text: "Cancelar", class: "btn-light" },
-                {
-                    text: "Remover",
-                    class: "btn-del",
-                    onClick: async () => {
-                        await waitForAuth();
-                        try {
-                            await deleteDoc(doc(db, "raclub_clients", id));
-                            showNotification("Cliente removido.", "success");
-                        } catch (err) {
-                            console.error(err);
-                            showNotification("Erro ao remover cliente.", "error");
-                        }
-                    },
-                },
-            ],
-        });
-    }
-
-    async function openPaymentModalForClient(id) {
-        const client = (state.allClients || []).find((c) => c.id === id);
-        if (!client) return;
-
-        const valueDefault = client.type === "plano_jc" ? Number(client.value || 0) : 0;
-
-        mainModal.show({
-            title: "Registrar pagamento",
-            body: `
+    mainModal.show({
+      title: "Registrar pagamento RA Club",
+      body: `
         <div class="form-grid">
-          <p>Cliente: <strong>${client.name}</strong></p>
+          <div class="field">
+            <label>Cliente</label>
+            <input value="${client.nomeCompleto}" disabled />
+          </div>
+
           <div class="field">
             <label>Valor</label>
-            <input id="payValue" type="number" step="0.01" value="${valueDefault}" />
+            <input id="payValue" type="number" step="0.01" min="0" placeholder="0.00" />
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <select id="payStatus">
+              <option value="Pago">Pago</option>
+              <option value="Pendente">Pendente</option>
+            </select>
           </div>
         </div>
       `,
-            buttons: [
-                { text: "Cancelar", class: "btn-light" },
-                {
-                    text: "Registrar",
-                    class: "btn-edit",
-                    onClick: async () => {
-                        await waitForAuth();
-                        const v = Number($("#payValue").value || 0);
-                        if (!v) {
-                            showNotification("Informe um valor válido.", "error");
-                            return false;
-                        }
-                        try {
-                            await addDoc(collection(db, "raclub_payments"), {
-                                clientId: client.id,
-                                clientName: client.name || "",
-                                value: v,
-                                date: serverTimestamp(),
+      buttons: [
+        { text: "Cancelar", class: "btn-light" },
+        {
+          text: "Registrar",
+          class: "btn-edit",
+          onClick: async () => {
+            await waitForAuth();
 
-                                // compat antigo:
-                                nomeCliente: client.name || "",
-                                valor: v,
-                                dataPagamento: serverTimestamp(),
-                            });
-                            showNotification("Pagamento registrado!", "success");
-                        } catch (err) {
-                            console.error(err);
-                            showNotification("Erro ao registrar pagamento.", "error");
-                        }
-                    },
-                },
-            ],
-        });
-    }
+            const value = Number($("#payValue")?.value || 0);
+            const status = $("#payStatus")?.value || "Pago";
 
-    function renderPayments(payments) {
-        if (!paymentsTableBody) return;
+            if (!value || value <= 0) {
+              showNotification("Informe um valor válido.", "error");
+              return false;
+            }
 
-        const now = new Date();
-        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            try {
+              await addDoc(collection(db, "raclub_payments"), {
+                clientId: client.id,
+                clientName: client.nomeCompleto,
+                value,
+                status,
+                date: serverTimestamp(),
 
-        const monthly = payments.filter((p) => {
-            const ts = p.date || p.dataPagamento || p.createdAt;
-            const d = ts?.toDate ? ts.toDate() : null;
-            if (!d) return false;
-            return d >= firstOfMonth;
-        });
+                // compatibilidade com estrutura antiga
+                nomeCliente: client.nomeCompleto,
+                valor: value,
+                dataPagamento: serverTimestamp(),
+                nome: client.nomeCompleto
+              });
 
-        if (!monthly.length) {
-            paymentsTableBody.innerHTML = `<tr><td colspan="4" class="loading-row">Nenhum pagamento este mês.</td></tr>`;
-            if (monthlyTotalSpan) monthlyTotalSpan.textContent = formatCurrency(0);
-            return;
+              showNotification("Pagamento registrado com sucesso!", "success");
+            } catch (err) {
+              console.error("Erro ao registrar pagamento:", err);
+              showNotification("Erro ao registrar pagamento.", "error");
+              return false;
+            }
+          }
         }
+      ]
+    });
+  }
 
-        paymentsTableBody.innerHTML = monthly
-            .map((p) => {
-                const ts = p.date || p.dataPagamento || p.createdAt;
-                const d = ts?.toDate ? ts.toDate() : new Date();
-                const nome = p.clientName || p.nomeCliente || p.nome || "—";
-                const valor = p.value ?? p.valor ?? 0;
+  cliTelefone?.addEventListener("input", () => {
+    cliTelefone.value = formatPhone(cliTelefone.value);
+  });
 
-                return `
+  cliSalvarBtn?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await saveClient();
+  });
+
+  cliLimparBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetClientForm();
+  });
+
+  clientesTbody?.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const { action, id } = btn.dataset;
+    if (!id) return;
+
+    if (action === "edit-client") openEditClientModal(id);
+    if (action === "pay-client") openPaymentModalForClient(id);
+    if (action === "delete-client") deleteClient(id);
+  });
+
+  (async () => {
+    await waitForAuth();
+
+    onSnapshot(
+      collection(db, "raclub_clients"),
+      (snap) => {
+        state.allClients = snap.docs
+          .map((d) => mapClientDoc(d.id, d.data() || {}))
+          .sort((a, b) => (a.nomeCompleto || "").localeCompare(b.nomeCompleto || ""));
+        renderClients();
+      },
+      (error) => {
+        console.error("Erro listener clientes:", error);
+        clientesTbody.innerHTML = `
           <tr>
-            <td data-label="Data">${formatDate(d)}</td>
-            <td data-label="Cliente">${nome}</td>
-            <td data-label="Valor">${formatCurrency(valor)}</td>
-            <td data-label="Ações">
-              <button class="btn btn-sm btn-del" data-payment-id="${p.id}">
-                <i class="bx bx-trash"></i>
-              </button>
-            </td>
+            <td colspan="4" class="loading-row">Erro ao carregar clientes.</td>
           </tr>
         `;
-            })
-            .join("");
+      }
+    );
 
-        const total = monthly.reduce((sum, p) => sum + (Number(p.value ?? p.valor) || 0), 0);
-        if (monthlyTotalSpan) monthlyTotalSpan.textContent = formatCurrency(total);
-    }
+    onSnapshot(
+      query(collection(db, "raclub_payments"), orderBy("date", "desc")),
+      (snap) => {
+        const payments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderPayments(payments);
+      },
+      async (error) => {
+        console.error("Erro listener pagamentos:", error);
 
-    paymentsTableBody?.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-payment-id]");
-        if (!btn) return;
-        const id = btn.dataset.paymentId;
-
-        mainModal.show({
-            title: "Remover pagamento",
-            body: "<p>Deseja remover este registro?</p>",
-            buttons: [
-                { text: "Cancelar", class: "btn-light" },
-                {
-                    text: "Confirmar",
-                    class: "btn-del",
-                    onClick: async () => {
-                        await waitForAuth();
-                        try {
-                            await deleteDoc(doc(db, "raclub_payments", id));
-                            showNotification("Pagamento removido!", "success");
-                        } catch (err) {
-                            console.error(err);
-                            showNotification("Erro ao remover pagamento.", "error");
-                        }
-                    },
-                },
-            ],
-        });
-    });
-
-    // listeners
-    (async () => {
-        await waitForAuth();
-
+        // fallback para registros antigos que podem não ter o campo "date"
         onSnapshot(
-            collection(db, "raclub_clients"),
-            (snap) => {
-                state.allClients = snap.docs.map((d) => mapOldClientDoc(d.id, d.data() || {}));
-                state.allClients.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-                applyClientFilters();
-                updateClientKPIs();
-            },
-            (error) => console.error("Erro listener clientes:", error)
+          collection(db, "raclub_payments"),
+          (snap) => {
+            const payments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            payments.sort((a, b) => {
+              const da = (a.date || a.dataPagamento)?.toDate?.()?.getTime?.() || 0;
+              const dbb = (b.date || b.dataPagamento)?.toDate?.()?.getTime?.() || 0;
+              return dbb - da;
+            });
+            renderPayments(payments);
+          },
+          (err2) => {
+            console.error("Erro fallback pagamentos:", err2);
+            raclubPayTbody.innerHTML = `
+              <tr>
+                <td colspan="4" class="loading-row">Erro ao carregar pagamentos.</td>
+              </tr>
+            `;
+          }
         );
-
-        onSnapshot(
-            query(collection(db, "raclub_payments"), orderBy("date", "desc")),
-            (snap) => {
-                const payments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-                renderPayments(payments);
-            },
-            (error) => console.error("Erro listener pagamentos:", error)
-        );
-
-        togglePlanFields();
-        applyClientFilters();
-        updateClientKPIs();
-    })();
+      }
+    );
+  })();
 }

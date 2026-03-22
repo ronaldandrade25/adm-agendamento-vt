@@ -590,6 +590,13 @@ async function init() {
   bindResumoGeralModal();
 
   await waitForAuth();
+
+  // ✅ AJUSTE:
+  // Deixa datas padrão e selects prontos antes de iniciar as abas,
+  // especialmente a aba de relatórios.
+  setDefaultDates();
+  populateProfessionalSelects();
+
   startGlobalListeners();
 
   initAgendaTab();
@@ -598,7 +605,6 @@ async function init() {
   initPdvTab();
   initConfiguracoesTab();
 
-  setDefaultDates();
   showTab("agenda");
 }
 
