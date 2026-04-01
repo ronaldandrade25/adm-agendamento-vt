@@ -1,7 +1,7 @@
 // /js/firebase.js (ESM)
 // ✅ Arquivo "central" com Firebase + Helpers + Modal + Tabs + Estado compartilhado
 // ✅ Sem login / sem Auth Gate
-// ✅ Importa e inicia as abas (agenda/relatorios/clientes/pdv/config)
+// ✅ Importa e inicia as abas (agenda/relatorios/clientes/pdv/config/contasapagar)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -37,6 +37,7 @@ import { initRelatoriosTab } from "./relatorios.js";
 import { initClientesTab } from "./clientes.js";
 import { initPdvTab } from "./pdv.js";
 import { initConfiguracoesTab } from "./configuracoes.js";
+import { initContasAPagarTab } from "./contasapagar.js";
 
 /* ========= Firebase ========= */
 const firebaseConfig = {
@@ -316,6 +317,9 @@ export const cfgExcecaoDoc = (ymd) => doc(db, "config", "excecoes", "dias", Stri
 export const COL_DESPESAS = collection(db, "despesas");
 export const COL_VENDAS = collection(db, "vendas");
 
+// ✅ NOVO: Collection Contas a Pagar
+export const COL_CONTAS_APAGAR = collection(db, "contas_apagar");
+
 /* ========= Profissionais helpers ========= */
 export function getProfByColecao(colecao) {
   return (state.PROFESSIONALS || []).find((p) => p.colecao === colecao);
@@ -562,6 +566,7 @@ function setDefaultDates() {
   const relAte = $("#relAte");
   const expenseDate = $("#expenseDate");
   const expData = $("#expData");
+  const cpDataPrimeiroVencimento = $("#cpDataPrimeiroVencimento");
 
   const hoje = new Date();
   const y = hoje.getFullYear();
@@ -576,6 +581,11 @@ function setDefaultDates() {
 
   if (expenseDate && !expenseDate.value) expenseDate.value = today;
   if (expData && !expData.value) expData.value = today;
+
+  // ✅ NOVO: data padrão da aba contas a pagar
+  if (cpDataPrimeiroVencimento && !cpDataPrimeiroVencimento.value) {
+    cpDataPrimeiroVencimento.value = today;
+  }
 }
 
 async function init() {
@@ -604,6 +614,7 @@ async function init() {
   initClientesTab();
   initPdvTab();
   initConfiguracoesTab();
+  initContasAPagarTab();
 
   showTab("agenda");
 }
