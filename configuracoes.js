@@ -28,6 +28,17 @@ export function initConfiguracoesTab() {
     return null;
   }
 
+  async function waitAnyEl(selectors = [], tries = 60, delay = 150) {
+    for (let i = 0; i < tries; i++) {
+      for (const selector of selectors) {
+        const el = $(selector);
+        if (el) return el;
+      }
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    return null;
+  }
+
   (async () => {
     // ===== Horário do painel =====
     const cfgInicio = await waitEl("#cfgInicio");
@@ -73,11 +84,15 @@ export function initConfiguracoesTab() {
     const profFotoUrlInput = await waitEl("#profFotoUrl");
 
     // ===== Serviços =====
-    const svcNomeInput = await waitEl("#svcNome");
-    const svcValorInput = await waitEl("#svcValor");
-    const svcTempoInput = await waitEl("#svcTempo");
-    const svcSalvarBtn = await waitEl("#svcSalvar");
-    const svcTbody = await waitEl("#svcTbody");
+    // compatível com HTML novo (serv*) e legado (svc*)
+    const servEditIdInput = await waitAnyEl(["#servEditId", "#svcEditId"]);
+    const servNomeInput = await waitAnyEl(["#servNome", "#svcNome"]);
+    const servValorInput = await waitAnyEl(["#servValor", "#svcValor"]);
+    const servTempoInput = await waitAnyEl(["#servTempo", "#svcTempo"]);
+    const servAtivoInput = await waitAnyEl(["#servAtivo", "#svcAtivo"]);
+    const servSalvarBtn = await waitAnyEl(["#servSalvar", "#svcSalvar"]);
+    const servCancelarEdicaoBtn = await waitAnyEl(["#servCancelarEdicao", "#svcCancelarEdicao"]);
+    const servTbody = await waitAnyEl(["#servTbody", "#svcTbody"]);
 
     const CFG_DOC_SEMANA = doc(db, "config", "semana");
     const CFG_COL_EXCECOES_GERAL = CFG_COL_EXCECOES;
@@ -173,7 +188,7 @@ export function initConfiguracoesTab() {
 
     function showPermissionHint(context = "ação") {
       showNotification(
-        `Sem permissão no Firestore para ${context}. Verifique se você está logado com o e-mail ADMIN e se as regras permitem write em "profissionais" e/ou "excecoes".`,
+        `Sem permissão no Firestore para ${context}. Verifique se você está logado com o e-mail ADMIN e se as regras permitem write em "profissionais", "servicos" e/ou "excecoes".`,
         "error"
       );
     }
@@ -191,7 +206,16 @@ export function initConfiguracoesTab() {
       }
 
       if (profFotoUrlInput) profFotoUrlInput.value = "";
-      if (profSalvarBtn) profSalvarBtn.textContent = "Salvar profissional";
+      if (profSalvarBtn) profSalvarBtn.innerHTML = `<i class="bx bx-save"></i> Salvar profissional`;
+    }
+
+    function resetServForm() {
+      if (servEditIdInput) servEditIdInput.value = "";
+      if (servNomeInput) servNomeInput.value = "";
+      if (servValorInput) servValorInput.value = "";
+      if (servTempoInput) servTempoInput.value = "30";
+      if (servAtivoInput) servAtivoInput.checked = true;
+      if (servSalvarBtn) servSalvarBtn.innerHTML = `<i class="bx bx-save"></i> Salvar serviço`;
     }
 
     function hideFileInputsEverywhere() {
@@ -373,21 +397,28 @@ export function initConfiguracoesTab() {
     }
 
     function renderServicosTable() {
-      if (!svcTbody) return;
+      if (!servTbody) return;
+
       const valid = (state.SERVICOS || []).filter((s) => !s.placeholder);
+
       if (!valid.length) {
-        svcTbody.innerHTML = `<tr><td colspan="4" class="loading-row">Nenhum serviço cadastrado.</td></tr>`;
+        servTbody.innerHTML = `<tr><td colspan="5" class="loading-row">Nenhum serviço cadastrado.</td></tr>`;
         return;
       }
-      svcTbody.innerHTML = valid
+
+      servTbody.innerHTML = valid
         .map(
           (s) => `
           <tr>
             <td>${escapeHtml(s.nome || "—")}</td>
             <td>${Number(s.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
             <td>${Number(s.tempoMin || 0)} min</td>
-            <td>
-              <button class="btn btn-sm btn-del" data-svc-del="${s.id}">
+            <td>${s.ativo === false ? "Não" : "Sim"}</td>
+            <td style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="btn btn-sm btn-light" data-serv-edit="${s.id}" title="Editar">
+                <i class="bx bx-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-del" data-serv-del="${s.id}" title="Excluir">
                 <i class="bx bx-trash"></i>
               </button>
             </td>
@@ -534,6 +565,53 @@ export function initConfiguracoesTab() {
       });
     }
 
+    function startEditServico(servId) {
+      const s = (state.SERVICOS || []).find((x) => x?.id === servId);
+      if (!s) return showNotification("Serviço não encontrado.", "error");
+
+      if (servEditIdInput) servEditIdInput.value = s.id || "";
+      if (servNomeInput) servNomeInput.value = s.nome || "";
+      if (servValorInput) servValorInput.value = String(Number(s.valor || 0));
+      if (servTempoInput) servTempoInput.value = String(Number(s.tempoMin || 30));
+      if (servAtivoInput) servAtivoInput.checked = s.ativo !== false;
+
+      if (servSalvarBtn) {
+        servSalvarBtn.innerHTML = `<i class="bx bx-save"></i> Salvar serviço`;
+      }
+
+      showNotification("Serviço carregado para edição.", "success");
+    }
+
+    function confirmDeleteServico(servId) {
+      const s = (state.SERVICOS || []).find((x) => x?.id === servId);
+      const nome = escapeHtml(s?.nome || "este serviço");
+
+      mainModal.show({
+        title: "Excluir serviço",
+        body: `<p>Deseja excluir <strong>${nome}</strong>?</p>`,
+        buttons: [
+          { text: "Cancelar", class: "btn-light" },
+          {
+            text: "Excluir",
+            class: "btn-del",
+            onClick: async () => {
+              try {
+                await waitForAuth();
+                await runWithQuickRetry(() => deleteDoc(doc(db, "servicos", servId)));
+                showNotification("Serviço excluído!", "success");
+                return true;
+              } catch (err) {
+                console.error(err);
+                if (isPermissionError(err)) showPermissionHint("excluir serviço");
+                else showNotification("Erro ao excluir serviço.", "error");
+                return false;
+              }
+            },
+          },
+        ],
+      });
+    }
+
     profTbody?.addEventListener("click", (e) => {
       const btnEdit = e.target.closest("[data-prof-edit]");
       const btnDel = e.target.closest("[data-prof-del]");
@@ -547,6 +625,23 @@ export function initConfiguracoesTab() {
       if (btnDel) {
         const id = btnDel.dataset.profDel;
         if (id) confirmDeleteProf(id);
+        return;
+      }
+    });
+
+    servTbody?.addEventListener("click", (e) => {
+      const btnEdit = e.target.closest("[data-serv-edit]");
+      const btnDel = e.target.closest("[data-serv-del]");
+
+      if (btnEdit) {
+        const id = btnEdit.dataset.servEdit;
+        if (id) startEditServico(id);
+        return;
+      }
+
+      if (btnDel) {
+        const id = btnDel.dataset.servDel;
+        if (id) confirmDeleteServico(id);
         return;
       }
     });
@@ -620,6 +715,61 @@ export function initConfiguracoesTab() {
       showNotification("Edição cancelada.", "success");
     });
 
+    // ✅ SALVAR SERVIÇO (FORM)
+    servSalvarBtn?.addEventListener("click", async (e) => {
+      e.preventDefault?.();
+      try {
+        await waitForAuth();
+
+        const editingId = (servEditIdInput?.value || "").trim();
+        const nome = (servNomeInput?.value || "").trim();
+        const valor = Number(String(servValorInput?.value || "0").replace(",", "."));
+        const tempoMin = Number(String(servTempoInput?.value || "0").replace(",", "."));
+        const ativo = servAtivoInput ? !!servAtivoInput.checked : true;
+
+        if (!nome) return showNotification("Informe o nome do serviço.", "error");
+        if (!tempoMin || tempoMin <= 0) return showNotification("Informe um tempo válido (min).", "error");
+
+        const payload = {
+          nome,
+          valor: Number.isNaN(valor) ? 0 : valor,
+          tempoMin,
+          ativo,
+          updatedAt: serverTimestamp(),
+        };
+
+        if (!editingId) {
+          await runWithQuickRetry(() =>
+            addDoc(COL_SERVICOS, {
+              ...payload,
+              createdAt: serverTimestamp(),
+            })
+          );
+
+          showNotification("Serviço cadastrado!", "success");
+          resetServForm();
+          return;
+        }
+
+        await runWithQuickRetry(() =>
+          setDoc(doc(db, "servicos", editingId), payload, { merge: true })
+        );
+
+        showNotification("Serviço salvo!", "success");
+        resetServForm();
+      } catch (err) {
+        console.error(err);
+        if (isPermissionError(err)) showPermissionHint("salvar serviço");
+        else showNotification("Erro ao salvar serviço.", "error");
+      }
+    });
+
+    servCancelarEdicaoBtn?.addEventListener("click", (e) => {
+      e.preventDefault?.();
+      resetServForm();
+      showNotification("Edição de serviço cancelada.", "success");
+    });
+
     // =========================
     // Load
     // =========================
@@ -677,7 +827,6 @@ export function initConfiguracoesTab() {
             breakEnd
           );
         } catch {
-          // fallback caso sua generateHours ainda aceite só 3 params
           state.HOURS = generateHours(state.BUSINESS_HOURS.inicio, state.BUSINESS_HOURS.fim, intervalToUse);
         }
       } catch (e) {
@@ -941,42 +1090,9 @@ export function initConfiguracoesTab() {
       });
     });
 
-    // ✅ Criar serviço
-    svcSalvarBtn?.addEventListener("click", async (e) => {
-      e.preventDefault?.();
-      try {
-        await waitForAuth();
-        const nome = (svcNomeInput?.value || "").trim();
-        const valor = Number(String(svcValorInput?.value || "0").replace(",", "."));
-        const tempoMin = Number(String(svcTempoInput?.value || "0").replace(",", "."));
-
-        if (!nome) return showNotification("Informe o nome do serviço.", "error");
-        if (!tempoMin || tempoMin <= 0) return showNotification("Informe um tempo válido (min).", "error");
-
-        await runWithQuickRetry(() =>
-          addDoc(COL_SERVICOS, {
-            nome,
-            valor: Number.isNaN(valor) ? 0 : valor,
-            tempoMin,
-            ativo: true,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          })
-        );
-
-        if (svcNomeInput) svcNomeInput.value = "";
-        if (svcValorInput) svcValorInput.value = "";
-        if (svcTempoInput) svcTempoInput.value = "";
-        showNotification("Serviço cadastrado!", "success");
-      } catch (err) {
-        console.error(err);
-        if (isPermissionError(err)) showPermissionHint("cadastrar serviço");
-        else showNotification("Erro ao cadastrar serviço.", "error");
-      }
-    });
-
     // ✅ start
     resetProfForm();
+    resetServForm();
     hideFileInputsEverywhere();
     loadConfigData();
   })();
