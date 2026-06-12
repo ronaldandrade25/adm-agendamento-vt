@@ -27,7 +27,7 @@
             <a href="#" class="logo" onclick="return false;">
                 <img src="./assets/logo-ra-baberaria1.png" class="logo-img" />
                 <div class="logo-text">
-                    <span>Barbearia RA Torre2</span>
+                    <span>Barbearia RA</span>
                     <small>Painel</small>
                 </div>
             </a>
@@ -43,6 +43,7 @@
             <button class="tab-btn" data-tab="clientes"><i class="bx bx-user-pin"></i> Clientes / RA Club</button>
             <button class="tab-btn" data-tab="pdv"><i class="bx bx-cart"></i> PDV / Produtos</button>
             <button class="tab-btn" data-tab="contasapagar"><i class="bx bx-wallet"></i> Contas a pagar</button>
+            <button class="tab-btn" data-tab="linkagendamento"><i class="bx bx-link"></i> Link de agendamento</button>
             <button class="tab-btn" data-tab="config"><i class="bx bx-cog"></i> Configurações</button>
         </nav>
 
@@ -76,6 +77,7 @@
                     <button type="button" class="tab-btn" data-tab="clientes"><i class="bx bx-user-pin"></i> Clientes / RA Club</button>
                     <button type="button" class="tab-btn" data-tab="pdv"><i class="bx bx-cart"></i> PDV / Produtos</button>
                     <button type="button" class="tab-btn" data-tab="contasapagar"><i class="bx bx-wallet"></i> Contas a pagar</button>
+                    <button type="button" class="tab-btn" data-tab="linkagendamento"><i class="bx bx-link"></i> Link de agendamento</button>
                     <button type="button" class="tab-btn" data-tab="config"><i class="bx bx-cog"></i> Configurações</button>
                 </div>
             </nav>
@@ -803,6 +805,30 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MAIN: Link de Agendamento -->
+        <main id="linkagendamentoMain" class="page-main hidden-block">
+            <section class="section">
+                <header class="section-header">
+                    <h1>Link de agendamento</h1>
+                    <p>Compartilhe o link da página de agendamento online com os clientes.</p>
+                </header>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Página de agendamento</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="muted" style="margin-bottom:14px;">
+                            Clique no botão abaixo para copiar o link de agendamento ou abri-lo em uma nova aba.
+                        </p>
+                        <button id="linkAgendamentoBtn" class="btn btn-edit" type="button">
+                            <i class="bx bx-link"></i> Link de agendamento
+                        </button>
                     </div>
                 </div>
             </section>
