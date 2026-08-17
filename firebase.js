@@ -1,9 +1,15 @@
 // /js/firebase.js (ESM)
 // ✅ Arquivo "central" com Firebase + Helpers + Modal + Tabs + Estado compartilhado
-// ✅ Sem login / sem Auth Gate
+// ✅ Login com Firebase Authentication (e-mail/senha) + Auth Gate
 // ✅ Importa e inicia as abas (agenda/relatorios/clientes/pdv/config/contasapagar)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   addDoc,
   collection,
@@ -41,17 +47,18 @@ import { initContasAPagarTab } from "./contasapagar.js";
 
 /* ========= Firebase ========= */
 const firebaseConfig = {
-  apiKey: "AIzaSyDgaoVZK-5TF5xDFulLISridU9IXbmEYgg",
-  authDomain: "barbearia-agenda-fe2a7.firebaseapp.com",
-  projectId: "barbearia-agenda-fe2a7",
-  storageBucket: "barbearia-agenda-fe2a7.firebasestorage.app",
-  messagingSenderId: "876658896099",
-  appId: "1:876658896099:web:6a361416ed84fd636f29d6",
-  measurementId: "G-NJ4ETW1TNZ",
+  apiKey: "", // COLOQUE_SUA_API_KEY_AQUI
+  authDomain: "", // COLOQUE_SEU_AUTH_DOMAIN_AQUI
+  projectId: "", // COLOQUE_SEU_PROJECT_ID_AQUI
+  storageBucket: "", // COLOQUE_SEU_STORAGE_BUCKET_AQUI
+  messagingSenderId: "", // COLOQUE_SEU_MESSAGING_SENDER_ID_AQUI
+  appId: "", // COLOQUE_SEU_APP_ID_AQUI
+  measurementId: "", // COLOQUE_SEU_MEASUREMENT_ID_AQUI
 };
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
 
 // ✅ Storage exports
 export const storage = getStorage(app);
@@ -282,10 +289,70 @@ export function showTab(tab) {
   });
 }
 
-/* ========= Sem autenticação ========= */
+/* ========= Auth Gate (login Firebase) ========= */
+let currentUser = null;
+let resolveAuthReady;
+const authReady = new Promise((resolve) => {
+  resolveAuthReady = resolve;
+});
+
 export async function waitForAuth() {
+  await authReady;
+  while (!currentUser) {
+    await new Promise((r) => setTimeout(r, 300));
+  }
   return true;
 }
+
+function setupAuthGate() {
+  const gate = $("#authGate");
+  const form = $("#authGateForm");
+  const emailInput = $("#authEmail");
+  const passwordInput = $("#authPassword");
+  const errorEl = $("#authGateError");
+  const submitBtn = $("#authGateSubmit");
+  const logoutBtn = $("#logoutBtn");
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl?.classList.add("hidden");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Entrando...";
+    }
+    try {
+      await signInWithEmailAndPassword(auth, (emailInput?.value || "").trim(), passwordInput?.value || "");
+    } catch (err) {
+      console.error("Erro de login:", err);
+      if (errorEl) {
+        errorEl.textContent = "E-mail ou senha inválidos.";
+        errorEl.classList.remove("hidden");
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Entrar";
+      }
+    }
+  });
+
+  logoutBtn?.addEventListener("click", () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      gate?.classList.add("hidden");
+      logoutBtn?.classList.remove("hidden");
+    } else {
+      gate?.classList.remove("hidden");
+      logoutBtn?.classList.add("hidden");
+      if (form) form.reset();
+    }
+    resolveAuthReady();
+  });
+}
+
+setupAuthGate();
 
 /* ========= Estado compartilhado ========= */
 export const BOOKING_URL = "https://site-agendamento-vt.vercel.app/"; // link do site de agendamento externo
