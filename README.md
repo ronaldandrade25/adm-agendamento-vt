@@ -65,7 +65,13 @@ const firebaseConfig = {
 Projeto Firebase atualmente configurado: **`barbearia-agenda-fe2a7`**.
 
 ### 3. Sincronizar com o site de agendamento
-No projeto do **site de agendamento** (outra pasta), use **exatamente o mesmo `firebaseConfig`** e as **mesmas coleções**. É essa configuração em comum que faz os dois sistemas se comunicarem.
+No projeto do **site de agendamento** ([`site-agendamento-vt`](../site-agendamento-vt), arquivo `script.js`), use **exatamente o mesmo `firebaseConfig`** deste `firebase.js` (principalmente o `projectId`) e as **mesmas coleções**. Hoje o `firebaseConfig` está com **campos vazios** nos dois: crie/escolha o projeto Firebase e cole os mesmos valores em ambos.
+
+Fluxo de dados:
+- **ADM grava** → `profissionais`, `servicos`, `config/*` (horários, semana, exceções) → **site lê**
+- **Site grava** → `reservas_<profissional>/{AAAA-MM-DD_HH:mm}` → **ADM lê** na Agenda (o ID é data + hora; o ADM deve usar o mesmo padrão)
+
+**Cadastro de profissionais (fonte única):** o site **não tem imagens nem lista fixa de profissionais**. Tudo vem de **Configurações → Profissionais** deste painel (coleção `profissionais`): `nome`, `fotoUrl`, `whatsapp`, `colecao` (ex.: `reservas_nome`, obrigatório), `fimExpediente` e `diasFolga`. Cadastrar, editar, trocar a foto ou remover aqui reflete automaticamente no site.
 
 ### 4. Coleções usadas no Firestore
 
@@ -112,73 +118,33 @@ onAuthStateChanged(auth, (user) => {
 await signOut(auth);
 ```
 
-> **Nota:** a versão atual deste painel abre direto, sem tela de login. A integração acima descreve como ativar o Authentication; a tela de login ainda precisa ser implementada no `index.html`/`firebase.js`. O site de agendamento **não** precisa de login do cliente, apenas o painel.
+> **Nota:** a tela de login já está implementada (`index.html` + `firebase.js`). O site de agendamento **não** precisa de login do cliente, apenas o painel.
 
 #### O e-mail cadastrado também precisa estar nas regras
 
 Criar o usuário no Authentication **não basta**. O login só protege os dados de verdade se o **mesmo e-mail** estiver nas **regras do Firestore e do Storage**. Sem isso, qualquer pessoa que conheça o `firebaseConfig` (ele fica público no navegador) consegue ler/gravar direto no banco, sem passar pelo painel.
 
-Exemplo de regras do **Firestore** (troque pelo e-mail cadastrado). O site de agendamento continua funcionando: lê profissionais, serviços e horários, e só **cria** agendamentos:
+As regras prontas estão em [`regras.md`](regras.md) (Firestore e Storage). Troque `SEU_EMAIL_ADMIN@exemplo.com` pelo e-mail do administrador e publique em *Firestore Database → Rules* e *Storage → Rules*.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
+O que as regras fazem:
+- **Leitura pública** de `config`, `servicos` e `profissionais` (o site de agendamento precisa ler), mas **escrita só do admin**.
+- **`reservas_*`**: o site (cliente, sem login) lê, cria, remarca e cancela; o admin pode tudo. A criação valida `data` (AAAA-MM-DD) e `hora` (HH:mm) e impede sobrescrever um horário já existente.
+- **Todo o resto** (clientes, PDV, vendas, despesas, contas a pagar, produtos, RA Club...) é **somente do admin** logado.
+- **Storage**: leitura pública das fotos; upload só do admin.
+- `email_verified` **não** é exigido, pois usuários criados pelo Console aparecem como "não verificados" e o login seria barrado.
 
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email == "seu-email@exemplo.com"
-        && request.auth.token.email_verified == true;
-    }
+#### O e-mail também vai no código
 
-    // Leitura pública para o site de agendamento; escrita só do admin
-    match /profissionais/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /servicos/{id}      { allow read: if true; allow write: if isAdmin(); }
-    match /config/{id}        { allow read: if true; allow write: if isAdmin(); }
-
-    // Agendamentos (coleções reservas_*): cliente cria, admin gerencia
-    match /{col}/{id} {
-      allow create: if col.matches('reservas_.*');
-      allow read, update, delete: if isAdmin();
-    }
-
-    // Todo o resto (clientes, vendas, despesas, produtos...) só o admin
-    match /{document=**} { allow read, write: if isAdmin(); }
-  }
-}
-```
-
-Exemplo do **Storage** (upload de foto do profissional):
-
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == "seu-email@exemplo.com";
-    }
-  }
-}
-```
-
-> Se o e-mail do admin não tiver o e-mail verificado, remova a linha `email_verified == true`. Ajuste a regra de `create` do site de agendamento conforme os campos que ele grava.
-
-#### O e-mail também vai no código (opcional, só para a interface)
-
-Além das regras, o projeto de referência `adm-barbeariaRA` guarda o e-mail em uma constante no `firebase.js` e confere no login e no `onAuthStateChanged`:
+No `firebase.js` existe a constante `ALLOWED_EMAIL`. Troque pelo mesmo e-mail das regras:
 
 ```js
 const ALLOWED_EMAIL = "seu-email@exemplo.com";
-// no login:  if (email !== ALLOWED_EMAIL) { /* recusar */ }
-// no estado: if (user && user.email?.toLowerCase() === ALLOWED_EMAIL) { /* abrir painel */ }
 ```
 
-Isso **não é segurança**, apenas esconde a tela para quem tentar entrar com outro e-mail. A segurança real está nas regras. Resumo: o e-mail precisa estar **no Authentication** (usuário), **nas regras** (obrigatório) e, se quiser o bloqueio na interface, **no código** (opcional).
+Ela recusa o login de outro e-mail e encerra sessões com e-mail diferente. Enquanto tiver o valor de exemplo (`SEU_EMAIL_ADMIN@exemplo.com`), a conferência é ignorada. Isso **não é segurança**, apenas controla a interface; a segurança real está nas regras. Resumo: o e-mail precisa estar **no Authentication** (usuário), **nas regras** (obrigatório) e **no código** (`ALLOWED_EMAIL`).
 
 ### 6. Regras de segurança (Firestore e Storage)
-Enquanto o painel **não usar autenticação**, as regras precisam permitir leitura/escrita para ele funcionar. Depois de implementar o login (passo 5), restrinja as regras a usuários autenticados nas áreas de gestão, mantendo para o site de agendamento apenas o acesso necessário (ler profissionais/serviços/horários e criar agendamentos).
+Use as regras de [`regras.md`](regras.md) (detalhadas no passo 5). Elas já restringem a gestão ao admin autenticado e mantêm, para o site de agendamento, apenas o acesso necessário (ler profissionais/serviços/horários e criar/remarcar/cancelar agendamentos).
 
 ## Como executar
 

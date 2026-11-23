@@ -290,6 +290,14 @@ export function showTab(tab) {
 }
 
 /* ========= Auth Gate (login Firebase) ========= */
+// ⚠️ Deve ser o MESMO e-mail das regras do Firestore/Storage (ver regras.md)
+const ALLOWED_EMAIL = "SEU_EMAIL_ADMIN@exemplo.com";
+
+function isAllowedEmail(email) {
+  if (!ALLOWED_EMAIL || ALLOWED_EMAIL.startsWith("SEU_EMAIL")) return true; // ainda não configurado
+  return String(email || "").trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase();
+}
+
 let currentUser = null;
 let resolveAuthReady;
 const authReady = new Promise((resolve) => {
@@ -321,7 +329,11 @@ function setupAuthGate() {
       submitBtn.textContent = "Entrando...";
     }
     try {
-      await signInWithEmailAndPassword(auth, (emailInput?.value || "").trim(), passwordInput?.value || "");
+      const email = (emailInput?.value || "").trim();
+      if (!isAllowedEmail(email)) {
+        throw new Error("E-mail não autorizado.");
+      }
+      await signInWithEmailAndPassword(auth, email, passwordInput?.value || "");
     } catch (err) {
       console.error("Erro de login:", err);
       if (errorEl) {
@@ -339,6 +351,11 @@ function setupAuthGate() {
   logoutBtn?.addEventListener("click", () => signOut(auth));
 
   onAuthStateChanged(auth, (user) => {
+    // E-mail fora da lista: encerra a sessão (as regras do Firestore também barram)
+    if (user && !isAllowedEmail(user.email)) {
+      signOut(auth);
+      return;
+    }
     currentUser = user;
     if (user) {
       gate?.classList.add("hidden");
